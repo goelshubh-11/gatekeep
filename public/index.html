@@ -730,6 +730,7 @@ async function startCameraWithDeviceId(deviceId){
   throw lastErr;
 }
 document.getElementById('camToggleBtn').addEventListener('click', async ()=>{
+  unlockAudio();
   if(scanning){ stopCamera(); return; }
   setDiag('');
   if(typeof jsQR !== 'function'){
@@ -789,7 +790,9 @@ function scanLoop(){
   if(!scanning) return;
   try{
     if(!camPaused && video.readyState === video.HAVE_ENOUGH_DATA){
-      canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+      const maxW = 480;
+      const scale = video.videoWidth > maxW ? maxW / video.videoWidth : 1;
+      canvas.width = Math.round(video.videoWidth * scale); canvas.height = Math.round(video.videoHeight * scale);
       ctx2d.drawImage(video,0,0,canvas.width,canvas.height);
       const imgData = ctx2d.getImageData(0,0,canvas.width,canvas.height);
       const code = jsQR(imgData.data, imgData.width, imgData.height);
@@ -809,6 +812,20 @@ document.getElementById('manualToken').addEventListener('keydown', e=>{ if(e.key
 
 function vibrate(pattern){ if(navigator.vibrate){ try{ navigator.vibrate(pattern); }catch(e){} } }
 
+let audioCtx = null;
+function unlockAudio(){
+  try{ audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); }catch(e){}
+}
+function beep(freq, duration){
+  if(!audioCtx) return;
+  try{
+    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+    osc.frequency.value = freq; osc.connect(gain); gain.connect(audioCtx.destination);
+    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    osc.start(); osc.stop(audioCtx.currentTime + duration);
+  }catch(e){}
+}
+
 async function verifyToken(token, fromCamera){
   const panel = document.getElementById('resultPanel');
   const title = document.getElementById('resultTitle');
@@ -820,17 +837,17 @@ async function verifyToken(token, fromCamera){
     if(r.result === 'invalid'){
       panel.className='result-panel state-invalid'; title.textContent='Invalid pass';
       sub.textContent='This code was not found in the registered roster.'; meta.textContent=token;
-      vibrate(160);
+      vibrate(160); beep(140, 0.25);
     }else if(r.result === 'already'){
       panel.className='result-panel state-used'; title.textContent='Already scanned';
       sub.textContent=`${r.record.name} was already checked in.`;
       meta.textContent=`Checked in at ${new Date(r.record.used_at).toLocaleTimeString()}`;
-      vibrate([90,70,90,70,90]);
+      vibrate([90,70,90,70,90]); beep(220, 0.12); setTimeout(()=>beep(220,0.12), 180);
     }else{
       panel.className='result-panel state-verified'; title.textContent='Verified — entry granted';
       sub.textContent=`${r.record.name}${r.record.student_id ? ' · '+r.record.student_id : ''}`;
       meta.textContent=`Pass ${r.record.token}`;
-      vibrate(70);
+      vibrate(70); beep(880, 0.15);
     }
   }catch(e){
     panel.className='result-panel state-invalid'; title.textContent='Error'; sub.textContent=e.message;

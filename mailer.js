@@ -98,10 +98,68 @@ async function sendPassEmail({ to, name, studentId, token, eventName }) {
   return result;
 }
 
+async function sendOtpEmail({ to, name, otp }) {
+  if (!to) throw new Error('No recipient email address provided');
+  if (!process.env.BREVO_API_KEY) throw new Error('BREVO_API_KEY is not configured');
+  if (!process.env.BREVO_FROM_EMAIL) throw new Error('BREVO_FROM_EMAIL is not configured');
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <body style="margin:0;padding:0;background:#0E1327;font-family:Arial,Helvetica,sans-serif;">
+      <div style="padding:32px 16px;background:#0E1327;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr><td align="center">
+            <table width="380" cellpadding="0" cellspacing="0" border="0" style="max-width:380px;width:100%;background:#EDEDF4;border-radius:16px;overflow:hidden;">
+              <tr><td style="height:8px;background:#5FD9C4;font-size:0;line-height:0;">&nbsp;</td></tr>
+              <tr><td style="padding:28px 28px 6px;">
+                <div style="font-size:10px;text-transform:uppercase;color:#6b6f85;font-weight:bold;letter-spacing:1px;">GATEKEEP ACCOUNT VERIFICATION</div>
+                <div style="font-size:18px;font-weight:bold;color:#0E1329;margin-top:6px;">Hi ${escapeHtml(name)},</div>
+              </td></tr>
+              <tr><td style="padding:10px 28px 6px;">
+                <div style="font-size:13px;color:#54586b;line-height:20px;">Use this code to verify your email and finish creating your account:</div>
+              </td></tr>
+              <tr><td align="center" style="padding:18px 28px;">
+                <div style="font-family:monospace;font-size:34px;font-weight:bold;letter-spacing:8px;color:#0E1329;background:#FFFFFF;border-radius:10px;padding:14px 10px;">${escapeHtml(otp)}</div>
+              </td></tr>
+              <tr><td style="padding:0 28px 28px;">
+                <div style="font-size:12px;color:#8b8fa3;">This code expires in 10 minutes. If you didn't request this, you can ignore this email.</div>
+              </td></tr>
+            </table>
+          </td></tr>
+        </table>
+      </div>
+    </body>
+    </html>`;
+
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'accept': 'application/json',
+      'api-key': process.env.BREVO_API_KEY,
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      sender: { name: 'Gatekeep', email: process.env.BREVO_FROM_EMAIL },
+      to: [{ email: to, name: name }],
+      subject: `Your Gatekeep verification code: ${otp}`,
+      htmlContent: html,
+      textContent: `Hi ${name},\n\nYour Gatekeep verification code is: ${otp}\n\nThis code expires in 10 minutes.`
+    })
+  });
+
+  const result = await response.json();
+  if (!response.ok) {
+    console.error('Brevo API error (OTP):', result);
+    throw new Error(result.message || 'Brevo email sending failed');
+  }
+  return result;
+}
+
 function escapeHtml(value) {
   return String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
 }
 
-module.exports = { sendPassEmail };
+module.exports = { sendPassEmail, sendOtpEmail };

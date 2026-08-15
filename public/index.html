@@ -23,6 +23,7 @@
     --teal:#5FD9C4; --teal-dim:#1C4B44;
     --green:#4FE39A; --green-dim:#123B2C;
     --red:#FF8794; --red-dim:#421F2B;
+    --blue:#8CB8FF; --blue-dim:#1E3358;
     --radius:16px;
   }
   *{box-sizing:border-box;}
@@ -39,79 +40,54 @@
     -webkit-font-smoothing:antialiased;
   }
   .mono{font-family:'JetBrains Mono',monospace;}
-  .display{font-family:'Space Grotesk',sans-serif;}
-
   .shell{max-width:1040px;margin:0 auto;padding:20px 18px 60px;}
-  header.top{
-    display:flex;align-items:center;justify-content:space-between;
-    padding:6px 2px 22px;border-bottom:1px solid var(--line);margin-bottom:22px;
-    flex-wrap:wrap;gap:14px;
-  }
-  .brand{display:flex;align-items:center;gap:10px;}
-  .brand-mark{
-    width:36px;height:36px;border-radius:11px;
-    background:linear-gradient(135deg, var(--accent), var(--teal));
-    display:flex;align-items:center;justify-content:center;
-    color:var(--accent-ink);font-weight:700;font-family:'Space Grotesk',sans-serif;font-size:16px;
-    box-shadow:0 4px 18px -4px rgba(243,170,95,.5);
-  }
+  header.top{display:flex;align-items:center;justify-content:space-between;padding:6px 2px 22px;
+    border-bottom:1px solid var(--line);margin-bottom:22px;flex-wrap:wrap;gap:14px;}
+  .brand{display:flex;align-items:center;gap:10px;cursor:pointer;}
+  .brand-mark{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg, var(--accent), var(--teal));
+    display:flex;align-items:center;justify-content:center;color:var(--accent-ink);font-weight:700;
+    font-family:'Space Grotesk',sans-serif;font-size:16px;box-shadow:0 4px 18px -4px rgba(243,170,95,.5);}
   .brand-text .t1{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:17px;letter-spacing:.2px;}
   .brand-text .t2{font-size:11.5px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;}
-
   .header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
   .whoami{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);
     border-radius:11px;padding:7px 12px;font-size:12.5px;}
-  .whoami .role-pill{padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;}
+  .role-pill{padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;}
   .role-pill.admin{background:var(--teal-dim);color:var(--teal);}
+  .role-pill.employee{background:var(--blue-dim);color:var(--blue);}
   .role-pill.scanner{background:var(--accent-dim);color:var(--accent);}
   .logout-btn{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;
     padding:5px 10px;font-size:11.5px;cursor:pointer;font-family:'Space Grotesk',sans-serif;}
   .logout-btn:hover{border-color:var(--red);color:var(--red);}
-
-  .event-switch{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);
-    border-radius:11px;padding:6px 8px 6px 12px;}
-  .event-switch select{appearance:none;background:transparent;border:none;color:var(--paper);
-    font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;outline:none;max-width:180px;}
-  .event-switch select option{background:var(--panel-2);color:var(--paper);}
-  .event-switch .newev{background:var(--teal-dim);color:var(--teal);border:none;border-radius:7px;
-    padding:6px 10px;font-size:12px;font-weight:600;font-family:'Space Grotesk',sans-serif;cursor:pointer;}
-  .event-switch .newev:hover{filter:brightness(1.15);}
-
-  nav.tabs{display:flex;gap:6px;background:var(--panel);padding:4px;border-radius:11px;border:1px solid var(--line);
-    flex-wrap:wrap;}
+  nav.tabs{display:flex;gap:6px;background:var(--panel);padding:4px;border-radius:11px;border:1px solid var(--line);flex-wrap:wrap;}
   nav.tabs button{appearance:none;border:none;background:transparent;color:var(--muted);
-    font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;
-    padding:8px 15px;border-radius:8px;cursor:pointer;transition:.15s;letter-spacing:.2px;}
+    font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;padding:8px 15px;border-radius:8px;
+    cursor:pointer;transition:.15s;letter-spacing:.2px;}
   nav.tabs button.active{background:linear-gradient(135deg, var(--accent), #F0C089);color:var(--accent-ink);}
   nav.tabs button:not(.active):hover{color:var(--paper);}
-
   .view{display:none;} .view.active{display:block;animation:fade .25s ease;}
+  .screen{display:none;} .screen.active{display:block;animation:fade .25s ease;}
   @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
-
   .panel{background:linear-gradient(180deg, var(--panel), var(--panel-2));border:1px solid var(--line);
     border-radius:var(--radius);padding:22px;margin-bottom:18px;box-shadow:0 10px 30px -18px rgba(0,0,0,.6);}
   .panel h2{font-family:'Space Grotesk',sans-serif;font-size:15px;margin:0 0 4px;letter-spacing:.2px;}
   .panel .sub{color:var(--muted);font-size:13px;margin:0 0 18px;line-height:1.55;}
-
   .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px;}
   .stat{background:linear-gradient(180deg, var(--panel), var(--panel-2));border:1px solid var(--line);
     border-radius:var(--radius);padding:16px 18px;}
   .stat .num{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;}
   .stat .lbl{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
   .stat.accent .num{color:var(--accent);} .stat.green .num{color:var(--green);}
-
   label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px;font-weight:500;}
   input[type=text],input[type=email],input[type=password],select.plainselect,textarea{
-    width:100%;background:#1B1636;border:1px solid var(--line);color:var(--paper);
-    border-radius:10px;padding:10px 12px;font-family:'Inter',sans-serif;font-size:14px;
-    outline:none;transition:.15s;}
+    width:100%;background:#1B1636;border:1px solid var(--line);color:var(--paper);border-radius:10px;
+    padding:10px 12px;font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:.15s;}
   input:focus,textarea:focus,select.plainselect:focus{border-color:var(--accent);}
   textarea{resize:vertical;min-height:100px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.6;}
   .field{margin-bottom:14px;}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
   @media(max-width:640px){.row2,.row3{grid-template-columns:1fr;}}
-
   button.btn{appearance:none;border:none;cursor:pointer;font-family:'Space Grotesk',sans-serif;font-weight:600;
     font-size:13.5px;padding:11px 20px;border-radius:10px;transition:.15s;}
   .btn-primary{background:linear-gradient(135deg, var(--accent), #F0C089);color:var(--accent-ink);}
@@ -122,7 +98,6 @@
   .btn-danger{background:var(--red-dim);color:var(--red);border:1px solid #6b2c39;}
   .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
   button.btn:disabled{opacity:.5;cursor:not-allowed;}
-
   table{width:100%;border-collapse:collapse;font-size:13px;}
   th{text-align:left;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.4px;
     padding:8px 10px;border-bottom:1px solid var(--line);}
@@ -132,15 +107,12 @@
   .pill-unused{background:var(--panel-2);color:var(--muted);border:1px solid var(--line);}
   .pill-used{background:var(--green-dim);color:var(--green);}
   .pill-fail{background:var(--red-dim);color:var(--red);}
-  .pill-admin{background:var(--teal-dim);color:var(--teal);}
-  .pill-scanner{background:var(--accent-dim);color:var(--accent);}
   .tok{color:var(--muted);font-size:11.5px;}
   .icon-btn{background:transparent;border:1px solid var(--line);color:var(--paper);border-radius:7px;padding:5px 10px;
     font-size:11.5px;cursor:pointer;font-family:'Space Grotesk',sans-serif;}
   .icon-btn:hover{border-color:var(--accent);color:var(--accent);}
   .icon-btn.danger:hover{border-color:var(--red);color:var(--red);}
   .empty{color:var(--muted);font-size:13px;text-align:center;padding:30px 10px;}
-
   .scan-wrap{position:relative;width:100%;max-width:420px;margin:0 auto;border-radius:18px;overflow:hidden;
     background:#000;border:1px solid var(--line);}
   .scan-wrap video{width:100%;display:block;}
@@ -151,9 +123,7 @@
     background:linear-gradient(90deg, transparent, var(--accent), transparent);
     box-shadow:0 0 12px var(--accent);animation:scanline 2s linear infinite;}
   @keyframes scanline{0%{top:0;}50%{top:100%;}100%{top:0;}}
-
-  .result-panel{border-radius:var(--radius);padding:26px 22px;text-align:center;margin-top:16px;
-    border:1px solid var(--line);transition:.2s;}
+  .result-panel{border-radius:var(--radius);padding:26px 22px;text-align:center;margin-top:16px;border:1px solid var(--line);transition:.2s;}
   .result-panel.state-idle{background:var(--panel);color:var(--muted);}
   .result-panel.state-verified{background:linear-gradient(180deg, var(--green-dim), #0e2a1f);border-color:#1f6b4d;}
   .result-panel.state-used{background:linear-gradient(180deg, var(--red-dim), #33141d);border-color:#7a3244;}
@@ -163,57 +133,325 @@
   .result-panel .rsub{font-size:14px;color:var(--paper);opacity:.9;}
   .result-panel .rmeta{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--muted);margin-top:10px;}
   .result-panel .scan-next{margin-top:16px;}
-
   .manual-row{display:flex;gap:8px;margin-top:14px;}
   .manual-row input{flex:1;}
-
   .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--panel-2);
     border:1px solid var(--line);color:var(--paper);padding:10px 18px;border-radius:10px;font-size:13px;
     box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:50;opacity:0;pointer-events:none;transition:.25s;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
-
   .footnote{color:var(--muted);font-size:11.5px;line-height:1.6;margin-top:6px;}
   .code-block{background:#140F2C;border:1px solid var(--line);border-radius:10px;padding:14px 16px;
     font-family:'JetBrains Mono',monospace;font-size:12px;color:#CFC8EE;overflow-x:auto;white-space:pre;}
-  .kv{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;padding:9px 0;
-    border-bottom:1px solid #2a2350;}
+  .kv{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;padding:9px 0;border-bottom:1px solid #2a2350;}
   .kv:last-child{border-bottom:none;}
   .kv span:first-child{color:var(--muted);flex-shrink:0;}
   .kv .val{font-family:'JetBrains Mono',monospace;font-size:12px;word-break:break-all;text-align:right;}
   .copy-row{display:flex;align-items:center;gap:8px;}
-
-  .gate{position:fixed;inset:0;background:linear-gradient(180deg, var(--bg-1), var(--bg-2));display:flex;
-    align-items:center;justify-content:center;z-index:100;}
-  .gate .box{width:340px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:28px;}
-  .gate .brand-mark{margin:0 auto 14px;}
-  .gate h3{font-family:'Space Grotesk',sans-serif;margin:0 0 4px;text-align:center;}
-  .gate p{color:var(--muted);font-size:13px;margin:0 0 20px;text-align:center;}
-
+  .center-screen{min-height:80vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .auth-box{width:360px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:28px;}
+  .auth-box .brand-mark{margin:0 auto 14px;width:44px;height:44px;font-size:18px;}
+  .auth-box h3{font-family:'Space Grotesk',sans-serif;margin:0 0 4px;text-align:center;}
+  .auth-box p{color:var(--muted);font-size:13px;margin:0 0 18px;text-align:center;}
+  .auth-toggle{display:flex;background:var(--panel-2);border-radius:10px;padding:3px;margin-bottom:18px;}
+  .auth-toggle button{flex:1;background:transparent;border:none;color:var(--muted);padding:8px;border-radius:8px;
+    font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;cursor:pointer;}
+  .auth-toggle button.active{background:var(--accent);color:var(--accent-ink);}
   .modal-backdrop{position:fixed;inset:0;background:rgba(10,6,26,.6);display:flex;align-items:center;
-    justify-content:center;z-index:90;}
-  .modal-box{width:340px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px;}
+    justify-content:center;z-index:90;padding:20px;}
+  .modal-box{width:360px;max-width:100%;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px;}
   .modal-box h3{font-family:'Space Grotesk',sans-serif;margin:0 0 4px;font-size:16px;}
   .modal-box p{color:var(--muted);font-size:12.5px;margin:0 0 16px;}
+  .event-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-top:6px;}
+  .event-card{background:linear-gradient(180deg, var(--panel), var(--panel-2));border:1px solid var(--line);
+    border-radius:var(--radius);padding:18px;cursor:pointer;transition:.15s;}
+  .event-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .event-card .ename{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;margin-bottom:8px;}
+  .event-card .estats{display:flex;gap:10px;font-size:11.5px;color:var(--muted);}
+  .add-event-card{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;
+    background:transparent;border:2px dashed var(--line);border-radius:var(--radius);padding:18px;cursor:pointer;
+    color:var(--muted);transition:.15s;min-height:96px;}
+  .add-event-card:hover{border-color:var(--accent);color:var(--accent);}
+  .add-event-card .plus{font-size:26px;line-height:1;}
+  .back-link{background:transparent;border:none;color:var(--muted);cursor:pointer;font-family:'Space Grotesk',sans-serif;
+    font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;margin-bottom:16px;}
+  .back-link:hover{color:var(--paper);}
+  .otp-boxes{display:flex;gap:8px;justify-content:center;margin-bottom:16px;}
 </style>
 </head>
 <body>
 
-<div class="gate" id="gate">
-  <div class="box">
-    <div class="brand-mark" style="width:44px;height:44px;font-size:18px;">GK</div>
-    <h3>Sign in to Gatekeep</h3>
-    <p>Use the account your event admin created for you.</p>
-    <div class="field"><label>Username</label><input type="text" id="loginUser" autocomplete="username"></div>
-    <div class="field"><label>Password</label><input type="password" id="loginPass" autocomplete="current-password"></div>
-    <button class="btn btn-primary" style="width:100%;" id="loginBtn">Log in</button>
-    <div class="footnote" id="loginError"></div>
+<!-- ===================== AUTH SCREEN ===================== -->
+<div class="screen active" id="screen-auth">
+  <div class="center-screen">
+    <div class="auth-box">
+      <div class="brand-mark">GK</div>
+      <h3 id="authTitle">Welcome to Gatekeep</h3>
+      <p id="authSub">Log in or create an account to continue.</p>
+
+      <div class="auth-toggle" id="authToggle">
+        <button class="active" data-mode="login">Log in</button>
+        <button data-mode="signup">Sign up</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="loginForm">
+        <div class="field"><label>Email or username</label><input type="text" id="loginIdentifier"></div>
+        <div class="field"><label>Password</label><input type="password" id="loginPassword"></div>
+        <button class="btn btn-primary" style="width:100%;" id="loginBtn">Log in</button>
+        <div class="footnote" id="loginError"></div>
+      </div>
+
+      <!-- SIGNUP STEP 1: name + email -->
+      <div id="signupStep1" style="display:none;">
+        <div class="field"><label>Your name</label><input type="text" id="suName" placeholder="Full name"></div>
+        <div class="field"><label>Email</label><input type="email" id="suEmail" placeholder="you@college.edu"></div>
+        <button class="btn btn-primary" style="width:100%;" id="suSendOtpBtn">Send verification code</button>
+        <div class="footnote" id="suStep1Error"></div>
+      </div>
+
+      <!-- SIGNUP STEP 2: OTP -->
+      <div id="signupStep2" style="display:none;">
+        <p style="margin-top:-8px;">Enter the 6-digit code sent to <strong id="suEmailShown"></strong></p>
+        <div class="field"><input type="text" id="suOtp" maxlength="6" placeholder="123456" style="text-align:center;font-size:22px;letter-spacing:8px;font-family:'JetBrains Mono',monospace;"></div>
+        <button class="btn btn-primary" style="width:100%;" id="suVerifyOtpBtn">Verify code</button>
+        <div class="footnote" id="suStep2Error"></div>
+      </div>
+
+      <!-- SIGNUP STEP 3: password -->
+      <div id="signupStep3" style="display:none;">
+        <div class="field"><label>Create a password</label><input type="password" id="suPass1"></div>
+        <div class="field"><label>Re-enter password</label><input type="password" id="suPass2"></div>
+        <button class="btn btn-primary" style="width:100%;" id="suFinishBtn">Create account</button>
+        <div class="footnote" id="suStep3Error"></div>
+      </div>
+    </div>
   </div>
 </div>
 
+<!-- ===================== LANDING SCREEN (event list) ===================== -->
+<div class="screen" id="screen-landing">
+  <div class="shell">
+    <header class="top">
+      <div class="brand" id="landingBrand">
+        <div class="brand-mark">GK</div>
+        <div class="brand-text"><div class="t1">Gatekeep</div><div class="t2">Your events</div></div>
+      </div>
+      <div class="header-right">
+        <div class="whoami"><span id="whoamiUser2">—</span><span class="role-pill" id="whoamiRole2">—</span></div>
+        <button class="logout-btn" id="logoutBtn2">Log out</button>
+      </div>
+    </header>
+
+    <div class="btn-row" id="landingAdminButtons" style="margin-bottom:18px;display:none;">
+      <button class="btn btn-teal" id="teamDetailsBtn">Team Details</button>
+    </div>
+
+    <div id="landingEmpty" class="panel" style="display:none;">
+      <div class="empty">Sorry, No events for you!</div>
+    </div>
+
+    <div class="event-grid" id="eventGrid"></div>
+  </div>
+</div>
+
+<!-- ===================== TEAM DETAILS SCREEN (admin only) ===================== -->
+<div class="screen" id="screen-team">
+  <div class="shell">
+    <header class="top">
+      <div class="brand" id="teamBrand">
+        <div class="brand-mark">GK</div>
+        <div class="brand-text"><div class="t1">Gatekeep</div><div class="t2">Team Details</div></div>
+      </div>
+      <div class="header-right">
+        <div class="whoami"><span id="whoamiUser3">—</span><span class="role-pill admin">ADMIN</span></div>
+        <button class="logout-btn" id="logoutBtn3">Log out</button>
+      </div>
+    </header>
+    <button class="back-link" id="backFromTeam">&larr; Back to my events</button>
+
+    <div class="panel">
+      <h2>Admin secret key</h2>
+      <p class="sub">Required to rename an event, clear an event's data, or promote someone to admin. Only admins can set or change it.</p>
+      <div class="row3">
+        <div class="field" id="currentKeyField" style="display:none;"><label>Current key</label><input type="password" id="akCurrent"></div>
+        <div class="field"><label id="akNewLabel">Set secret key</label><input type="password" id="akNew"></div>
+        <div class="field"><label>&nbsp;</label><button class="btn btn-ghost" id="akSaveBtn">Save key</button></div>
+      </div>
+      <div class="footnote" id="akStatus"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Add someone to the directory</h2>
+      <p class="sub">Pre-add a person by email before they've signed up. Once they sign up with this same email, they'll automatically get whatever event access you've already assigned them.</p>
+      <div class="row3">
+        <div class="field"><label>Name</label><input type="text" id="tdName"></div>
+        <div class="field"><label>Email</label><input type="email" id="tdEmail"></div>
+        <div class="field"><label>&nbsp;</label><button class="btn btn-primary" id="tdAddBtn">Add to directory</button></div>
+      </div>
+      <div class="footnote" id="tdAddStatus"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Everyone in the directory</h2>
+      <p class="sub">This is the master list. Assign people to specific events from inside that event's Members tab.</p>
+      <div id="teamTableWrap"><div class="empty">Loading…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== EVENT WORKSPACE SCREEN ===================== -->
+<div class="screen" id="screen-event">
+  <div class="shell">
+    <header class="top">
+      <div class="brand" id="eventBrand">
+        <div class="brand-mark">GK</div>
+        <div class="brand-text"><div class="t1" id="eventBrandName">Gatekeep</div><div class="t2">Event Entry Verification</div></div>
+      </div>
+      <div class="header-right">
+        <div class="whoami"><span id="whoamiUser">—</span><span class="role-pill" id="whoamiRole">—</span></div>
+        <button class="logout-btn" id="logoutBtn">Log out</button>
+      </div>
+    </header>
+    <button class="back-link" id="backFromEvent">&larr; Back to my events</button>
+
+    <nav class="tabs" id="mainTabs" style="margin-bottom:20px;">
+      <button class="active" data-view="admin" data-minrole="employee">Register</button>
+      <button data-view="scan" data-minrole="scanner">Gate Scanner</button>
+      <button data-view="roster" data-minrole="employee">Roster</button>
+      <button data-view="integrations" data-minrole="employee">Integrations</button>
+      <button data-view="members" data-minrole="admin">Members</button>
+    </nav>
+
+    <div class="view active" id="view-admin">
+      <div class="panel">
+        <h2>Current event</h2>
+        <p class="sub">Renaming requires the admin secret key.</p>
+        <div class="row2">
+          <div class="field"><label>Event name</label><input type="text" id="eventNameInput" placeholder="e.g. TechFest 2026"></div>
+          <div class="field"><label>&nbsp;</label><button class="btn btn-ghost" id="saveEventBtn">Rename event</button></div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">Registered</div></div>
+        <div class="stat green"><div class="num" id="statUsed">0</div><div class="lbl">Checked in</div></div>
+        <div class="stat accent"><div class="num" id="statPending">0</div><div class="lbl">Not yet arrived</div></div>
+      </div>
+      <div class="panel">
+        <h2>Add a single registrant</h2>
+        <p class="sub">A pass is generated and the confirmation email with the QR code is sent automatically.</p>
+        <div class="row3">
+          <div class="field"><label>Full name</label><input type="text" id="oneName" placeholder="Aditi Rao"></div>
+          <div class="field"><label>College ID</label><input type="text" id="oneId" placeholder="21CS0142"></div>
+          <div class="field"><label>Email</label><input type="email" id="oneEmail" placeholder="aditi.rao@college.edu"></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" id="addOneBtn">Generate pass &amp; email it</button></div>
+        <div class="footnote" id="oneStatus"></div>
+      </div>
+      <div class="panel">
+        <h2>Bulk import</h2>
+        <p class="sub">Paste one registrant per line as <span class="mono">name, id, email</span>.</p>
+        <div class="field"><textarea id="bulkText" placeholder="Aditi Rao, 21CS0142, aditi.rao@college.edu
+Rohan Mehta, 21CS0198, rohan.mehta@college.edu"></textarea></div>
+        <div class="btn-row"><button class="btn btn-primary" id="bulkAddBtn">Generate &amp; email all</button></div>
+        <div class="footnote" id="bulkStatus"></div>
+      </div>
+    </div>
+
+    <div class="view" id="view-scan">
+      <div class="panel">
+        <h2>Gate scanner</h2>
+        <p class="sub">Scanning pauses after each result so you can see it clearly, then resumes automatically.</p>
+        <div class="scan-wrap"><video id="video" playsinline autoplay muted></video><div class="scan-frame"><div class="box"></div></div></div>
+        <canvas id="canvas" style="display:none;"></canvas>
+        <div class="btn-row" style="justify-content:center;margin-top:14px;align-items:center;">
+          <button class="btn btn-ghost" id="camToggleBtn">Start camera</button>
+          <select id="camSelect" class="mono" style="display:none;background:#1B1636;color:var(--paper);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12.5px;"></select>
+        </div>
+        <div class="footnote" id="camDiag" style="text-align:center;"></div>
+        <div class="manual-row"><input type="text" id="manualToken" placeholder="Or type / paste the pass code manually"><button class="btn btn-primary" id="manualVerifyBtn">Verify</button></div>
+        <div class="result-panel state-idle" id="resultPanel">
+          <div class="rtitle" id="resultTitle">Awaiting scan</div>
+          <div class="rsub" id="resultSub">Start the camera or enter a code to verify entry.</div>
+          <div class="rmeta" id="resultMeta"></div>
+          <div class="scan-next" id="scanNextWrap" style="display:none;"><button class="btn btn-teal" id="scanNextBtn">Scan next now</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="view" id="view-roster">
+      <div class="panel">
+        <h2>Registrant roster</h2>
+        <div class="btn-row" style="margin-bottom:6px;">
+          <button class="btn btn-ghost" id="refreshRosterBtn">Refresh</button>
+          <button class="btn btn-ghost" id="exportCsvBtn">Export CSV</button>
+          <button class="btn btn-danger" id="resetEventBtn">Clear this event's data</button>
+        </div>
+        <div id="rosterTableWrap"><div class="empty">Loading roster…</div></div>
+      </div>
+    </div>
+
+    <div class="view" id="view-integrations">
+      <div class="panel">
+        <h2>Connect Microsoft Forms (Power Automate)</h2>
+        <p class="sub">Targets this event (<strong id="intEventName">—</strong>).</p>
+        <div class="kv"><span>Endpoint URL</span><div class="copy-row"><span class="val" id="intUrl">—</span><button class="icon-btn" id="copyUrl">Copy</button></div></div>
+        <div class="kv"><span>Method</span><div class="val">POST</div></div>
+        <div class="kv"><span>Header: Authorization</span><div class="copy-row"><span class="val" id="intKey">Bearer ••••••••</span><button class="icon-btn" id="revealKey">Show</button></div></div>
+        <div class="kv"><span>Header: x-event-id</span><div class="copy-row"><span class="val" id="intEventId">—</span><button class="icon-btn" id="copyEventId">Copy</button></div></div>
+        <div style="margin-top:16px;"><label>Request body (JSON)</label>
+          <div class="code-block">{
+  "name": "",
+  "id": "",
+  "email": ""
+}</div>
+        </div>
+        <p class="footnote">Sessions last 12 hours. For a long-running flow, use a dedicated employee account for this so refreshing its token doesn't log you out.</p>
+      </div>
+    </div>
+
+    <div class="view" id="view-members">
+      <div class="panel">
+        <h2>Event members</h2>
+        <p class="sub">Only people already in Team Details can be added here.</p>
+        <div class="row3">
+          <div class="field" style="grid-column:span 2;"><label>Person</label><select class="plainselect" id="memberPersonSelect"></select></div>
+          <div class="field"><label>Role for this event</label>
+            <select class="plainselect" id="memberRoleSelect">
+              <option value="employee">Employee (register, roster, scan)</option>
+              <option value="scanner">Scanner (gate scanner only)</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row"><button class="btn btn-primary" id="memberAddBtn">Add to this event</button></div>
+        <div class="footnote" id="memberAddStatus"></div>
+      </div>
+      <div class="panel">
+        <h2>Currently assigned</h2>
+        <div id="membersTableWrap"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== admin-key confirm modal (reusable) ===================== -->
+<div class="modal-backdrop" id="adminKeyModal" style="display:none;">
+  <div class="modal-box">
+    <h3 id="akmTitle">Enter admin secret key</h3>
+    <p id="akmSub">This action requires the admin secret key.</p>
+    <div class="field"><input type="password" id="akmInput" placeholder="Secret key"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="akmConfirm" style="flex:1;">Confirm</button>
+      <button class="btn btn-ghost" id="akmCancel">Cancel</button>
+    </div>
+    <div class="footnote" id="akmError"></div>
+  </div>
+</div>
+
+<!-- ===================== new event modal ===================== -->
 <div class="modal-backdrop" id="newEventModal" style="display:none;">
   <div class="modal-box">
     <h3>Create a new event</h3>
-    <p>Starts a fresh, empty roster. Your other events and their data stay exactly as they are — switch back anytime from the dropdown.</p>
+    <p>Starts a fresh, empty roster.</p>
     <div class="field"><input type="text" id="newEventName" placeholder="e.g. Alumni Meet 2027"></div>
     <div class="btn-row">
       <button class="btn btn-primary" id="newEventCreate" style="flex:1;">Create event</button>
@@ -222,341 +460,345 @@
   </div>
 </div>
 
-<div class="modal-backdrop" id="newUserModal" style="display:none;">
-  <div class="modal-box">
-    <h3>Add a team member</h3>
-    <p>Admins get full access. Scanners can only open the Gate Scanner tab — no roster, registration, or event data.</p>
-    <div class="field"><label>Username</label><input type="text" id="newUserName"></div>
-    <div class="field"><label>Temporary password</label><input type="text" id="newUserPass" placeholder="At least 6 characters"></div>
-    <div class="field"><label>Role</label>
-      <select class="plainselect" id="newUserRole">
-        <option value="scanner">Scanner (gate access only)</option>
-        <option value="admin">Admin (full access)</option>
-      </select>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-primary" id="newUserCreate" style="flex:1;">Create account</button>
-      <button class="btn btn-ghost" id="newUserCancel">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<div class="shell">
-  <header class="top">
-    <div class="brand">
-      <div class="brand-mark">GK</div>
-      <div class="brand-text"><div class="t1">Gatekeep</div><div class="t2">Event Entry Verification</div></div>
-    </div>
-    <div class="header-right">
-      <div class="event-switch" id="eventSwitchWrap" style="display:none;">
-        <select id="eventSelect"></select>
-        <button class="newev" id="newEventBtn">+ New event</button>
-      </div>
-      <div class="whoami">
-        <span id="whoamiUser">—</span>
-        <span class="role-pill" id="whoamiRole">—</span>
-        <button class="logout-btn" id="logoutBtn">Log out</button>
-      </div>
-    </div>
-  </header>
-
-  <nav class="tabs" id="mainTabs" style="margin-bottom:20px;">
-    <button class="active" data-view="admin" data-role="admin">Register</button>
-    <button data-view="scan" data-role="any">Gate Scanner</button>
-    <button data-view="roster" data-role="admin">Roster</button>
-    <button data-view="integrations" data-role="admin">Integrations</button>
-    <button data-view="team" data-role="admin">Team</button>
-  </nav>
-
-  <div class="view active" id="view-admin">
-    <div class="panel">
-      <h2>Current event</h2>
-      <p class="sub">Everything below (registrations, roster, scanning) applies to the event selected above.</p>
-      <div class="row2">
-        <div class="field"><label>Event name</label><input type="text" id="eventNameInput" placeholder="e.g. TechFest 2026"></div>
-        <div class="field"><label>&nbsp;</label><button class="btn btn-ghost" id="saveEventBtn">Rename event</button></div>
-      </div>
-    </div>
-
-    <div class="stats">
-      <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">Registered</div></div>
-      <div class="stat green"><div class="num" id="statUsed">0</div><div class="lbl">Checked in</div></div>
-      <div class="stat accent"><div class="num" id="statPending">0</div><div class="lbl">Not yet arrived</div></div>
-    </div>
-
-    <div class="panel">
-      <h2>Add a single registrant</h2>
-      <p class="sub">A pass is generated and the confirmation email with the QR code is sent automatically.</p>
-      <div class="row3">
-        <div class="field"><label>Full name</label><input type="text" id="oneName" placeholder="Aditi Rao"></div>
-        <div class="field"><label>College ID</label><input type="text" id="oneId" placeholder="21CS0142"></div>
-        <div class="field"><label>Email</label><input type="email" id="oneEmail" placeholder="aditi.rao@college.edu"></div>
-      </div>
-      <div class="btn-row"><button class="btn btn-primary" id="addOneBtn">Generate pass &amp; email it</button></div>
-      <div class="footnote" id="oneStatus"></div>
-    </div>
-
-    <div class="panel">
-      <h2>Bulk import</h2>
-      <p class="sub">Paste one registrant per line as <span class="mono">name, id, email</span>. Each row gets its own pass, emailed automatically. See the Integrations tab to automate this straight from a Microsoft Form.</p>
-      <div class="field"><textarea id="bulkText" placeholder="Aditi Rao, 21CS0142, aditi.rao@college.edu
-Rohan Mehta, 21CS0198, rohan.mehta@college.edu"></textarea></div>
-      <div class="btn-row"><button class="btn btn-primary" id="bulkAddBtn">Generate &amp; email all</button></div>
-      <div class="footnote" id="bulkStatus"></div>
-    </div>
-  </div>
-
-  <div class="view" id="view-scan">
-    <div class="panel">
-      <h2>Gate scanner</h2>
-      <p class="sub">Point the camera at a registrant's QR pass. Scanning pauses after each result so you can see it clearly, then resumes automatically.</p>
-      <div class="scan-wrap"><video id="video" playsinline autoplay muted></video><div class="scan-frame"><div class="box"></div></div></div>
-      <canvas id="canvas" style="display:none;"></canvas>
-      <div class="btn-row" style="justify-content:center;margin-top:14px;align-items:center;">
-        <button class="btn btn-ghost" id="camToggleBtn">Start camera</button>
-        <select id="camSelect" class="mono" style="display:none;background:#1B1636;color:var(--paper);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12.5px;"></select>
-      </div>
-      <div class="footnote" id="camDiag" style="text-align:center;"></div>
-      <div class="manual-row"><input type="text" id="manualToken" placeholder="Or type / paste the pass code manually"><button class="btn btn-primary" id="manualVerifyBtn">Verify</button></div>
-      <div class="result-panel state-idle" id="resultPanel">
-        <div class="rtitle" id="resultTitle">Awaiting scan</div>
-        <div class="rsub" id="resultSub">Start the camera or enter a code to verify entry.</div>
-        <div class="rmeta" id="resultMeta"></div>
-        <div class="scan-next" id="scanNextWrap" style="display:none;">
-          <button class="btn btn-teal" id="scanNextBtn">Scan next now</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="view" id="view-roster">
-    <div class="panel">
-      <h2>Registrant roster</h2>
-      <p class="sub">Live status for everyone registered to the current event.</p>
-      <div class="btn-row" style="margin-bottom:6px;">
-        <button class="btn btn-ghost" id="refreshRosterBtn">Refresh</button>
-        <button class="btn btn-ghost" id="exportCsvBtn">Export CSV</button>
-        <button class="btn btn-danger" id="resetEventBtn">Clear this event's data</button>
-      </div>
-      <div id="rosterTableWrap"><div class="empty">Loading roster…</div></div>
-    </div>
-  </div>
-
-  <div class="view" id="view-integrations">
-    <div class="panel">
-      <h2>Connect Microsoft Forms (Power Automate)</h2>
-      <p class="sub">Automatically create a pass and email it the instant someone submits your registration form. This targets whichever event is currently selected above (<strong id="intEventName">—</strong>). If you start a new event later, update the flow's <span class="mono">x-event-id</span> value to the new one.</p>
-
-      <div class="kv"><span>Endpoint URL</span><div class="copy-row"><span class="val" id="intUrl">—</span><button class="icon-btn" id="copyUrl">Copy</button></div></div>
-      <div class="kv"><span>Method</span><div class="val">POST</div></div>
-      <div class="kv"><span>Header: Authorization</span><div class="copy-row"><span class="val" id="intKey">Bearer ••••••••</span><button class="icon-btn" id="revealKey">Show</button></div></div>
-      <div class="kv"><span>Header: x-event-id</span><div class="copy-row"><span class="val" id="intEventId">—</span><button class="icon-btn" id="copyEventId">Copy</button></div></div>
-
-      <div style="margin-top:16px;"><label>Request body (JSON)</label>
-        <div class="code-block" id="intBody">{
-  "name": "",
-  "id": "",
-  "email": ""
-}</div>
-      </div>
-      <p class="footnote">The Authorization token above is a long-lived login session (12 hours) — for a Power Automate flow that needs to run for longer, create a dedicated admin account just for this flow so its session can be refreshed independently of your own login.</p>
-
-      <div style="margin-top:18px;">
-        <label>Set up steps</label>
-        <ol style="color:var(--paper);font-size:13px;line-height:1.9;margin:0;padding-left:20px;">
-          <li>Go to <span class="mono">make.powerautomate.com</span> → Create → Automated cloud flow.</li>
-          <li>Trigger: Microsoft Forms → <em>When a new response is submitted</em> → pick your form.</li>
-          <li>Add step: Microsoft Forms → <em>Get response details</em> (Response Id from the trigger).</li>
-          <li>Add step: <strong>HTTP</strong> → POST to the endpoint URL above, with the two headers above, and the JSON body above — filling each value from the form's dynamic content.</li>
-          <li>Save, then submit a test response and confirm the person shows up in the Roster tab and gets the email.</li>
-        </ol>
-      </div>
-      <p class="footnote">This server must be reachable at a public HTTPS address for Power Automate to call it — a local laptop address won't work here.</p>
-    </div>
-  </div>
-
-  <div class="view" id="view-team">
-    <div class="panel">
-      <h2>Team access</h2>
-      <p class="sub">Admins can register students, manage the roster, and configure events. Scanners can only open the Gate Scanner tab.</p>
-      <div class="btn-row" style="margin-bottom:10px;"><button class="btn btn-primary" id="newUserBtn">+ Add team member</button></div>
-      <div id="usersTableWrap"><div class="empty">Loading team…</div></div>
-    </div>
-    <div class="panel">
-      <h2>Change my password</h2>
-      <div class="row3">
-        <div class="field"><label>Current password</label><input type="password" id="cpOld"></div>
-        <div class="field"><label>New password</label><input type="password" id="cpNew"></div>
-        <div class="field"><label>&nbsp;</label><button class="btn btn-ghost" id="cpBtn">Update password</button></div>
-      </div>
-      <div class="footnote" id="cpStatus"></div>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script>
 let TOKEN = localStorage.getItem('gk_token') || '';
-let ROLE = localStorage.getItem('gk_role') || '';
+let IS_ADMIN = localStorage.getItem('gk_is_admin') === 'true';
 let USERNAME = localStorage.getItem('gk_username') || '';
-let CURRENT_EVENT = localStorage.getItem('gk_event_id') || '';
+let CURRENT_EVENT = null; // full event object incl. myRole
 let EVENTS_CACHE = [];
+let TEAM_CACHE = [];
 
 function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id !== 'screen-event') stopCamera();
+}
 
-async function api(path, opts={}, includeEvent=true){
+async function api(path, opts={}, includeEvent=false){
   const headers = { 'Content-Type':'application/json', 'Authorization': 'Bearer '+TOKEN, ...(opts.headers||{}) };
-  if(includeEvent && CURRENT_EVENT) headers['x-event-id'] = CURRENT_EVENT;
+  if(includeEvent && CURRENT_EVENT) headers['x-event-id'] = CURRENT_EVENT.id;
   const res = await fetch(path, { ...opts, headers });
-  if(res.status === 401){ logout('Your session expired — please log in again.'); throw new Error('unauthorized'); }
+  if(res.status === 401){ doLogout('Your session expired — please log in again.'); throw new Error('unauthorized'); }
   if(!res.ok){ const t = await res.json().catch(()=>({error:res.statusText})); throw new Error(t.error || res.statusText); }
   const ct = res.headers.get('content-type') || '';
   return ct.includes('application/json') ? res.json() : res.text();
 }
 
-function showGate(err){
-  document.getElementById('gate').style.display = 'flex';
-  document.getElementById('loginError').textContent = err || '';
-}
-function logout(msg){
-  TOKEN=''; ROLE=''; USERNAME='';
-  localStorage.removeItem('gk_token'); localStorage.removeItem('gk_role'); localStorage.removeItem('gk_username');
-  stopCamera();
-  showGate(msg || '');
-}
-document.getElementById('logoutBtn').addEventListener('click', ()=>logout());
+/* ================= AUTH SCREEN ================= */
+document.querySelectorAll('#authToggle button').forEach(b=>b.addEventListener('click', ()=>{
+  document.querySelectorAll('#authToggle button').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  const login = b.dataset.mode === 'login';
+  document.getElementById('loginForm').style.display = login ? 'block' : 'none';
+  document.getElementById('signupStep1').style.display = login ? 'none' : 'block';
+  document.getElementById('signupStep2').style.display = 'none';
+  document.getElementById('signupStep3').style.display = 'none';
+}));
 
 document.getElementById('loginBtn').addEventListener('click', async ()=>{
-  const username = document.getElementById('loginUser').value.trim();
-  const password = document.getElementById('loginPass').value;
-  if(!username || !password){ document.getElementById('loginError').textContent = 'Enter both fields.'; return; }
+  const identifier = document.getElementById('loginIdentifier').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const err = document.getElementById('loginError'); err.textContent = '';
+  if(!identifier || !password){ err.textContent = 'Enter both fields.'; return; }
   try{
-    const res = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username, password}) });
-    if(!res.ok){ document.getElementById('loginError').textContent = 'Incorrect username or password.'; return; }
+    const res = await fetch('/api/auth/login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({identifier, password})});
     const data = await res.json();
-    TOKEN = data.token; ROLE = data.role; USERNAME = data.username;
-    localStorage.setItem('gk_token', TOKEN); localStorage.setItem('gk_role', ROLE); localStorage.setItem('gk_username', USERNAME);
-    document.getElementById('gate').style.display = 'none';
-    boot();
-  }catch(e){ document.getElementById('loginError').textContent = 'Could not reach the server.'; }
+    if(!res.ok){ err.textContent = data.error || 'Login failed.'; return; }
+    completeLogin(data.token, data.username, data.isAdmin);
+  }catch(e){ err.textContent = 'Could not reach the server.'; }
 });
-document.getElementById('loginPass').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('loginBtn').click(); });
+document.getElementById('loginPassword').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('loginBtn').click(); });
 
-function applyRoleUI(){
-  document.getElementById('whoamiUser').textContent = USERNAME;
-  const rp = document.getElementById('whoamiRole');
-  rp.textContent = ROLE; rp.className = 'role-pill ' + ROLE;
-  document.getElementById('eventSwitchWrap').style.display = ROLE === 'admin' ? 'flex' : 'none';
-  document.querySelectorAll('#mainTabs button').forEach(btn=>{
-    const need = btn.dataset.role;
-    btn.style.display = (need === 'any' || need === ROLE) ? '' : 'none';
+let signupToken = null, signupEmail = '';
+document.getElementById('suSendOtpBtn').addEventListener('click', async ()=>{
+  const name = document.getElementById('suName').value.trim();
+  const email = document.getElementById('suEmail').value.trim();
+  const err = document.getElementById('suStep1Error'); err.textContent = '';
+  if(!name || !email.includes('@')){ err.textContent = 'Enter your name and a valid email.'; return; }
+  const btn = document.getElementById('suSendOtpBtn'); btn.disabled = true; btn.textContent = 'Sending…';
+  try{
+    const res = await fetch('/api/auth/signup', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name, email})});
+    const data = await res.json();
+    if(!res.ok){ err.textContent = data.error || 'Could not sign up.'; btn.disabled=false; btn.textContent='Send verification code'; return; }
+    signupEmail = email;
+    document.getElementById('suEmailShown').textContent = email;
+    document.getElementById('signupStep1').style.display = 'none';
+    document.getElementById('signupStep2').style.display = 'block';
+  }catch(e){ err.textContent = 'Could not reach the server.'; }
+  btn.disabled = false; btn.textContent = 'Send verification code';
+});
+document.getElementById('suVerifyOtpBtn').addEventListener('click', async ()=>{
+  const otp = document.getElementById('suOtp').value.trim();
+  const err = document.getElementById('suStep2Error'); err.textContent = '';
+  try{
+    const res = await fetch('/api/auth/verify-otp', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email:signupEmail, otp})});
+    const data = await res.json();
+    if(!res.ok){ err.textContent = data.error || 'Incorrect code.'; return; }
+    signupToken = data.signupToken;
+    document.getElementById('signupStep2').style.display = 'none';
+    document.getElementById('signupStep3').style.display = 'block';
+  }catch(e){ err.textContent = 'Could not reach the server.'; }
+});
+document.getElementById('suFinishBtn').addEventListener('click', async ()=>{
+  const p1 = document.getElementById('suPass1').value;
+  const p2 = document.getElementById('suPass2').value;
+  const err = document.getElementById('suStep3Error'); err.textContent = '';
+  if(p1.length < 6){ err.textContent = 'Password must be at least 6 characters.'; return; }
+  if(p1 !== p2){ err.textContent = 'Passwords do not match.'; return; }
+  try{
+    const res = await fetch('/api/auth/set-password', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+signupToken}, body: JSON.stringify({password:p1, confirmPassword:p2})});
+    const data = await res.json();
+    if(!res.ok){ err.textContent = data.error || 'Could not create account.'; return; }
+    completeLogin(data.token, data.username, data.isAdmin);
+  }catch(e){ err.textContent = 'Could not reach the server.'; }
+});
+
+function completeLogin(token, username, isAdmin){
+  TOKEN = token; USERNAME = username; IS_ADMIN = isAdmin;
+  localStorage.setItem('gk_token', TOKEN);
+  localStorage.setItem('gk_username', USERNAME);
+  localStorage.setItem('gk_is_admin', String(IS_ADMIN));
+  goToLanding();
+}
+function doLogout(msg){
+  TOKEN=''; USERNAME=''; IS_ADMIN=false; CURRENT_EVENT=null;
+  localStorage.removeItem('gk_token'); localStorage.removeItem('gk_username'); localStorage.removeItem('gk_is_admin');
+  stopCamera();
+  document.getElementById('loginError').textContent = msg || '';
+  document.getElementById('loginIdentifier').value=''; document.getElementById('loginPassword').value='';
+  showScreen('screen-auth');
+}
+document.getElementById('logoutBtn').addEventListener('click', ()=>doLogout());
+document.getElementById('logoutBtn2').addEventListener('click', ()=>doLogout());
+document.getElementById('logoutBtn3').addEventListener('click', ()=>doLogout());
+
+/* ================= LANDING SCREEN ================= */
+async function goToLanding(){
+  showScreen('screen-landing');
+  document.getElementById('whoamiUser2').textContent = USERNAME;
+  const rp = document.getElementById('whoamiRole2'); rp.textContent = IS_ADMIN?'admin':'member'; rp.className='role-pill '+(IS_ADMIN?'admin':'employee');
+  document.getElementById('landingAdminButtons').style.display = IS_ADMIN ? 'flex' : 'none';
+  try{
+    EVENTS_CACHE = await api('/api/my-events');
+  }catch(e){ return; }
+  const grid = document.getElementById('eventGrid');
+  const empty = document.getElementById('landingEmpty');
+  if(EVENTS_CACHE.length === 0 && !IS_ADMIN){
+    empty.style.display='block'; grid.innerHTML=''; return;
+  }
+  empty.style.display='none';
+  let html = EVENTS_CACHE.map(e=>`
+    <div class="event-card" data-id="${e.id}">
+      <div class="ename">${escapeHtml(e.name)}</div>
+      <div class="estats"><span>${e.total} registered</span><span>·</span><span>${e.used} checked in</span></div>
+      <div style="margin-top:10px;"><span class="role-pill ${e.myRole}">${e.myRole}</span></div>
+    </div>`).join('');
+  if(IS_ADMIN){
+    html += `<div class="add-event-card" id="addEventCard"><div class="plus">+</div><div>New event</div></div>`;
+  }
+  grid.innerHTML = html;
+  grid.querySelectorAll('.event-card').forEach(c=>c.addEventListener('click', ()=>{
+    const ev = EVENTS_CACHE.find(x=>x.id===c.dataset.id);
+    enterEvent(ev);
+  }));
+  const addCard = document.getElementById('addEventCard');
+  if(addCard) addCard.addEventListener('click', ()=>{
+    document.getElementById('newEventName').value='';
+    document.getElementById('newEventModal').style.display='flex';
   });
-  if(ROLE !== 'admin'){
-    document.querySelectorAll('#mainTabs button').forEach(b=>b.classList.remove('active'));
-    document.querySelector('#mainTabs button[data-view="scan"]').classList.add('active');
-    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-    document.getElementById('view-scan').classList.add('active');
-  }
 }
+document.getElementById('landingBrand').addEventListener('click', goToLanding);
+document.getElementById('eventBrand').addEventListener('click', goToLanding);
+document.getElementById('teamBrand').addEventListener('click', goToLanding);
+document.getElementById('backFromEvent').addEventListener('click', goToLanding);
+document.getElementById('backFromTeam').addEventListener('click', goToLanding);
+document.getElementById('teamDetailsBtn').addEventListener('click', goToTeamDetails);
 
-/* ---------- events (admin only) ---------- */
-async function loadEvents(){
-  if(ROLE !== 'admin') return;
-  EVENTS_CACHE = await api('/api/events', {}, false);
-  if(!CURRENT_EVENT || !EVENTS_CACHE.find(e=>e.id===CURRENT_EVENT)){
-    CURRENT_EVENT = EVENTS_CACHE[0] ? EVENTS_CACHE[0].id : '';
-    localStorage.setItem('gk_event_id', CURRENT_EVENT);
-  }
-  const sel = document.getElementById('eventSelect');
-  sel.innerHTML = EVENTS_CACHE.map(e=>`<option value="${e.id}" ${e.id===CURRENT_EVENT?'selected':''}>${escapeHtml(e.name)} (${e.total})</option>`).join('');
-}
-document.getElementById('eventSelect').addEventListener('change', async (e)=>{
-  CURRENT_EVENT = e.target.value;
-  localStorage.setItem('gk_event_id', CURRENT_EVENT);
-  await refreshForCurrentEvent();
-  showToast('Switched event');
-});
-document.getElementById('newEventBtn').addEventListener('click', ()=>{
-  document.getElementById('newEventName').value = '';
-  document.getElementById('newEventModal').style.display = 'flex';
-});
-document.getElementById('newEventCancel').addEventListener('click', ()=>{
-  document.getElementById('newEventModal').style.display = 'none';
-});
+document.getElementById('newEventCancel').addEventListener('click', ()=>{ document.getElementById('newEventModal').style.display='none'; });
 document.getElementById('newEventCreate').addEventListener('click', async ()=>{
   const name = document.getElementById('newEventName').value.trim();
   if(!name){ showToast('Enter an event name'); return; }
-  const ev = await api('/api/events', {method:'POST', body: JSON.stringify({name})}, false);
-  CURRENT_EVENT = ev.id;
-  localStorage.setItem('gk_event_id', CURRENT_EVENT);
-  document.getElementById('newEventModal').style.display = 'none';
-  await loadEvents();
-  await refreshForCurrentEvent();
-  showToast(`Created "${name}" — now active`);
-});
-async function currentEventObj(){
-  return EVENTS_CACHE.find(e=>e.id===CURRENT_EVENT) || { id: CURRENT_EVENT, name: 'Event' };
-}
-document.getElementById('saveEventBtn').addEventListener('click', async ()=>{
-  const name = document.getElementById('eventNameInput').value.trim();
-  if(!name){ showToast('Enter a name'); return; }
-  await api(`/api/events/${CURRENT_EVENT}`, {method:'PATCH', body: JSON.stringify({name})}, false);
-  await loadEvents();
-  showToast('Event renamed');
-  fillIntegrationsTab();
+  try{
+    const ev = await api('/api/events', {method:'POST', body: JSON.stringify({name})});
+    document.getElementById('newEventModal').style.display='none';
+    showToast(`Created "${name}"`);
+    await goToLanding();
+    enterEvent({...ev, myRole:'admin', total:0, used:0, pending:0});
+  }catch(e){ showToast('Error: '+e.message); }
 });
 
-/* ---------- tabs ---------- */
+/* ================= ADMIN-KEY MODAL (reusable) ================= */
+function askForAdminKey(title, sub){
+  return new Promise((resolve)=>{
+    document.getElementById('akmTitle').textContent = title;
+    document.getElementById('akmSub').textContent = sub || 'This action requires the admin secret key.';
+    document.getElementById('akmInput').value = '';
+    document.getElementById('akmError').textContent = '';
+    document.getElementById('adminKeyModal').style.display = 'flex';
+    const confirmBtn = document.getElementById('akmConfirm');
+    const cancelBtn = document.getElementById('akmCancel');
+    function cleanup(){ confirmBtn.onclick=null; cancelBtn.onclick=null; document.getElementById('adminKeyModal').style.display='none'; }
+    confirmBtn.onclick = ()=>{ const v = document.getElementById('akmInput').value; cleanup(); resolve(v); };
+    cancelBtn.onclick = ()=>{ cleanup(); resolve(null); };
+  });
+}
+
+/* ================= TEAM DETAILS SCREEN ================= */
+async function goToTeamDetails(){
+  showScreen('screen-team');
+  document.getElementById('whoamiUser3').textContent = USERNAME;
+  try{
+    const status = await api('/api/admin-key/status');
+    document.getElementById('currentKeyField').style.display = status.isSet ? 'block' : 'none';
+    document.getElementById('akNewLabel').textContent = status.isSet ? 'New secret key' : 'Set secret key';
+    document.getElementById('akStatus').textContent = status.isSet ? 'A secret key is currently set.' : 'No secret key set yet — set one now.';
+  }catch(e){}
+  loadTeamTable();
+}
+document.getElementById('akSaveBtn').addEventListener('click', async ()=>{
+  const currentKey = document.getElementById('akCurrent').value;
+  const newKey = document.getElementById('akNew').value;
+  const statusEl = document.getElementById('akStatus');
+  if(!newKey || newKey.length < 6){ statusEl.textContent = 'New key must be at least 6 characters.'; return; }
+  try{
+    await api('/api/admin-key', {method:'POST', body: JSON.stringify({currentKey, newKey})});
+    statusEl.textContent = 'Secret key saved.';
+    document.getElementById('akCurrent').value=''; document.getElementById('akNew').value='';
+    document.getElementById('currentKeyField').style.display='block';
+    document.getElementById('akNewLabel').textContent = 'New secret key';
+  }catch(e){ statusEl.textContent = 'Error: '+e.message; }
+});
+document.getElementById('tdAddBtn').addEventListener('click', async ()=>{
+  const name = document.getElementById('tdName').value.trim();
+  const email = document.getElementById('tdEmail').value.trim();
+  const statusEl = document.getElementById('tdAddStatus');
+  if(!email.includes('@')){ statusEl.textContent = 'Enter a valid email.'; return; }
+  try{
+    await api('/api/team', {method:'POST', body: JSON.stringify({username:name, email})});
+    statusEl.textContent = 'Added to directory.';
+    document.getElementById('tdName').value=''; document.getElementById('tdEmail').value='';
+    loadTeamTable();
+  }catch(e){ statusEl.textContent = 'Error: '+e.message; }
+});
+async function loadTeamTable(){
+  const wrap = document.getElementById('teamTableWrap');
+  wrap.innerHTML = '<div class="empty">Loading…</div>';
+  try{
+    TEAM_CACHE = await api('/api/team');
+  }catch(e){ wrap.innerHTML = '<div class="empty">Could not load team.</div>'; return; }
+  if(TEAM_CACHE.length===0){ wrap.innerHTML='<div class="empty">Nobody in the directory yet.</div>'; return; }
+  wrap.innerHTML = `<table><thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Global role</th><th></th></tr></thead><tbody>${
+    TEAM_CACHE.map(u=>`
+    <tr>
+      <td>${escapeHtml(u.username)}${u.username===USERNAME?' <span class="tok">(you)</span>':''}</td>
+      <td class="tok">${escapeHtml(u.email||'—')}</td>
+      <td>${u.verified ? `<span class="pill pill-used">Active</span>` : `<span class="pill pill-unused">Not signed up yet</span>`}</td>
+      <td><span class="role-pill ${u.is_admin?'admin':'employee'}">${u.is_admin?'admin':'member'}</span></td>
+      <td>${u.username!==USERNAME ? `
+        <button class="icon-btn" data-toggle-admin="${u.id}" data-isadmin="${u.is_admin}">${u.is_admin?'Remove admin':'Make admin'}</button>
+        <button class="icon-btn danger" data-remove="${u.id}">Remove</button>` : ''}</td>
+    </tr>`).join('')
+  }</tbody></table>`;
+  wrap.querySelectorAll('[data-toggle-admin]').forEach(b=>b.addEventListener('click', async ()=>{
+    const makeAdmin = b.dataset.isadmin !== '1' && b.dataset.isadmin !== 'true';
+    const key = await askForAdminKey(makeAdmin?'Promote to admin':'Remove admin access', 'Enter the admin secret key to confirm.');
+    if(key===null) return;
+    try{
+      await api(`/api/team/${b.dataset.toggleAdmin}`, {method:'PATCH', body: JSON.stringify({isAdmin: makeAdmin, adminKey: key})});
+      showToast(makeAdmin?'Promoted to admin':'Admin access removed');
+      loadTeamTable();
+    }catch(e){ showToast('Error: '+e.message); }
+  }));
+  wrap.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click', async ()=>{
+    if(!confirm('Remove this person from the directory entirely? They will lose access to every event.')) return;
+    try{ await api(`/api/team/${b.dataset.remove}`, {method:'DELETE'}); showToast('Removed'); loadTeamTable(); }
+    catch(e){ showToast('Error: '+e.message); }
+  }));
+}
+
+/* ================= EVENT WORKSPACE ================= */
+function enterEvent(ev){
+  CURRENT_EVENT = ev;
+  showScreen('screen-event');
+  document.getElementById('eventBrandName').textContent = ev.name;
+  document.getElementById('whoamiUser').textContent = USERNAME;
+  const rp = document.getElementById('whoamiRole'); rp.textContent = ev.myRole; rp.className='role-pill '+ev.myRole;
+
+  document.querySelectorAll('#mainTabs button').forEach(btn=>{
+    const need = btn.dataset.minrole; // scanner < employee < admin
+    let allowed = false;
+    if(ev.myRole === 'admin') allowed = true;
+    else if(ev.myRole === 'employee') allowed = (need === 'scanner' || need === 'employee');
+    else if(ev.myRole === 'scanner') allowed = (need === 'scanner');
+    btn.style.display = allowed ? '' : 'none';
+  });
+  const firstVisible = Array.from(document.querySelectorAll('#mainTabs button')).find(b=>b.style.display !== 'none');
+  document.querySelectorAll('#mainTabs button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  if(firstVisible){ firstVisible.classList.add('active'); document.getElementById('view-'+firstVisible.dataset.view).classList.add('active'); }
+  onEventTabChange(firstVisible ? firstVisible.dataset.view : 'scan');
+}
 document.querySelectorAll('#mainTabs button').forEach(btn=>{
   btn.addEventListener('click', ()=>{
+    if(btn.style.display === 'none') return;
     document.querySelectorAll('#mainTabs button').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     document.getElementById('view-'+btn.dataset.view).classList.add('active');
-    if(btn.dataset.view==='roster') loadRoster();
-    if(btn.dataset.view==='admin') refreshStats();
-    if(btn.dataset.view==='integrations') fillIntegrationsTab();
-    if(btn.dataset.view==='team') loadTeam();
+    onEventTabChange(btn.dataset.view);
   });
 });
+function onEventTabChange(view){
+  if(view==='roster') loadRoster();
+  if(view==='admin') refreshStats();
+  if(view==='integrations') fillIntegrationsTab();
+  if(view==='members') loadMembersTab();
+}
 
-/* ---------- stats ---------- */
+document.getElementById('saveEventBtn').addEventListener('click', async ()=>{
+  const name = document.getElementById('eventNameInput').value.trim();
+  if(!name){ showToast('Enter a name'); return; }
+  const key = await askForAdminKey('Rename event', `Renaming "${CURRENT_EVENT.name}" requires the admin secret key.`);
+  if(key===null) return;
+  try{
+    const updated = await api(`/api/events/${CURRENT_EVENT.id}`, {method:'PATCH', body: JSON.stringify({name, adminKey:key})});
+    CURRENT_EVENT.name = updated.name;
+    document.getElementById('eventBrandName').textContent = updated.name;
+    showToast('Event renamed');
+    fillIntegrationsTab();
+  }catch(e){ showToast('Error: '+e.message); }
+});
+
 async function refreshStats(){
-  if(ROLE !== 'admin') return;
-  const s = await api('/api/stats');
+  const s = await api('/api/stats', {}, true);
   document.getElementById('statTotal').textContent = s.total;
   document.getElementById('statUsed').textContent = s.used;
   document.getElementById('statPending').textContent = s.pending;
-  const ev = await currentEventObj();
-  document.getElementById('eventNameInput').value = ev.name;
-}
-async function refreshForCurrentEvent(){
-  await refreshStats(); loadRoster(); fillIntegrationsTab();
+  document.getElementById('eventNameInput').value = CURRENT_EVENT.name;
 }
 
-/* ---------- add one ---------- */
 document.getElementById('addOneBtn').addEventListener('click', async ()=>{
   const name = document.getElementById('oneName').value.trim();
   const id = document.getElementById('oneId').value.trim();
   const email = document.getElementById('oneEmail').value.trim();
   if(!name){ showToast('Enter a name first'); return; }
-  const btn = document.getElementById('addOneBtn');
-  btn.disabled = true; btn.textContent = 'Generating & sending…';
+  const btn = document.getElementById('addOneBtn'); btn.disabled = true; btn.textContent = 'Generating & sending…';
   const statusEl = document.getElementById('oneStatus');
   try{
-    const r = await api('/api/students', {method:'POST', body: JSON.stringify({name, id, email})});
+    const r = await api('/api/students', {method:'POST', body: JSON.stringify({name, id, email})}, true);
     if(r.mailStatus === 'sent') statusEl.textContent = `✓ Pass created and emailed to ${email}.`;
     else if(r.mailStatus === 'skipped') statusEl.textContent = `Pass created (no email address given — nothing sent).`;
     else statusEl.textContent = `Pass created, but the email failed to send: ${r.mailError}`;
     document.getElementById('oneName').value=''; document.getElementById('oneId').value=''; document.getElementById('oneEmail').value='';
-    refreshStats(); loadEvents();
+    refreshStats();
   }catch(e){ statusEl.textContent = 'Error: '+e.message; }
   btn.disabled = false; btn.textContent = 'Generate pass & email it';
 });
 
-/* ---------- bulk ---------- */
 document.getElementById('bulkAddBtn').addEventListener('click', async ()=>{
   const raw = document.getElementById('bulkText').value.trim();
   if(!raw){ showToast('Paste some rows first'); return; }
@@ -564,26 +806,23 @@ document.getElementById('bulkAddBtn').addEventListener('click', async ()=>{
     const [name,id,email] = l.split(',').map(p=>p.trim());
     return {name,id,email};
   });
-  const btn = document.getElementById('bulkAddBtn');
-  btn.disabled = true; btn.textContent = 'Processing…';
+  const btn = document.getElementById('bulkAddBtn'); btn.disabled = true; btn.textContent = 'Processing…';
   const statusEl = document.getElementById('bulkStatus');
   try{
-    const r = await api('/api/students/bulk', {method:'POST', body: JSON.stringify({rows})});
+    const r = await api('/api/students/bulk', {method:'POST', body: JSON.stringify({rows})}, true);
     const sent = r.results.filter(x=>x.mailStatus==='sent').length;
     const failed = r.results.filter(x=>String(x.mailStatus).startsWith('failed')).length;
     statusEl.textContent = `Created ${r.created} pass(es) — ${sent} emailed successfully${failed?`, ${failed} email(s) failed (see Roster)`:''}.`;
     document.getElementById('bulkText').value='';
-    refreshStats(); loadEvents();
+    refreshStats();
   }catch(e){ statusEl.textContent = 'Error: '+e.message; }
   btn.disabled = false; btn.textContent = 'Generate & email all';
 });
 
-/* ---------- roster ---------- */
 async function loadRoster(){
-  if(ROLE !== 'admin') return;
   const wrap = document.getElementById('rosterTableWrap');
   wrap.innerHTML = '<div class="empty">Loading roster…</div>';
-  const rows = await api('/api/students');
+  const rows = await api('/api/students', {}, true);
   if(rows.length===0){ wrap.innerHTML = '<div class="empty">No registrants yet in this event.</div>'; return; }
   const body = rows.map(r=>`
     <tr>
@@ -599,14 +838,14 @@ async function loadRoster(){
   wrap.innerHTML = `<table><thead><tr><th>Name</th><th>ID</th><th>Email</th><th>Pass code</th><th>Status</th><th>Email</th><th>Checked in</th><th></th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll('[data-resend]').forEach(b=>b.addEventListener('click', async ()=>{
     b.disabled = true; b.textContent = 'Sending…';
-    try{ await api(`/api/students/${b.dataset.resend}/resend`, {method:'POST'}); showToast('Email resent'); loadRoster(); }
+    try{ await api(`/api/students/${b.dataset.resend}/resend`, {method:'POST'}, true); showToast('Email resent'); loadRoster(); }
     catch(e){ showToast('Resend failed: '+e.message); b.disabled=false; b.textContent='Resend'; }
   }));
 }
 document.getElementById('refreshRosterBtn').addEventListener('click', loadRoster);
 document.getElementById('exportCsvBtn').addEventListener('click', async ()=>{
   try{
-    const res = await fetch(`/api/export.csv?eventId=${encodeURIComponent(CURRENT_EVENT)}`, { headers: { 'Authorization': 'Bearer '+TOKEN } });
+    const res = await fetch(`/api/export.csv?eventId=${encodeURIComponent(CURRENT_EVENT.id)}`, { headers: { 'Authorization': 'Bearer '+TOKEN } });
     if(!res.ok) throw new Error('Export failed');
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
@@ -615,213 +854,83 @@ document.getElementById('exportCsvBtn').addEventListener('click', async ()=>{
   }catch(e){ showToast('Export failed: '+e.message); }
 });
 document.getElementById('resetEventBtn').addEventListener('click', async ()=>{
-  const ev = await currentEventObj();
-  if(!confirm(`This permanently clears all registrants and check-in data for "${ev.name}" only. Other events are untouched. Continue?`)) return;
-  await api('/api/reset', {method:'POST'});
-  showToast('Event data cleared'); loadRoster(); refreshStats(); loadEvents();
+  if(!confirm(`This permanently clears all registrants and check-in data for "${CURRENT_EVENT.name}" only. Continue?`)) return;
+  const key = await askForAdminKey('Clear event data', `Clearing "${CURRENT_EVENT.name}" requires the admin secret key.`);
+  if(key===null) return;
+  try{
+    await api('/api/reset', {method:'POST', body: JSON.stringify({adminKey:key})}, true);
+    showToast('Event data cleared'); loadRoster(); refreshStats();
+  }catch(e){ showToast('Error: '+e.message); }
 });
 
-/* ---------- integrations tab ---------- */
 async function fillIntegrationsTab(){
-  if(ROLE !== 'admin') return;
-  const ev = await currentEventObj();
-  document.getElementById('intEventName').textContent = ev.name;
-  document.getElementById('intEventId').textContent = ev.id;
+  document.getElementById('intEventName').textContent = CURRENT_EVENT.name;
+  document.getElementById('intEventId').textContent = CURRENT_EVENT.id;
   document.getElementById('intUrl').textContent = window.location.origin + '/api/students';
 }
-document.getElementById('copyUrl').addEventListener('click', ()=>{
-  navigator.clipboard.writeText(document.getElementById('intUrl').textContent); showToast('Endpoint URL copied');
-});
-document.getElementById('copyEventId').addEventListener('click', ()=>{
-  navigator.clipboard.writeText(document.getElementById('intEventId').textContent); showToast('Event ID copied');
-});
+document.getElementById('copyUrl').addEventListener('click', ()=>{ navigator.clipboard.writeText(document.getElementById('intUrl').textContent); showToast('Copied'); });
+document.getElementById('copyEventId').addEventListener('click', ()=>{ navigator.clipboard.writeText(document.getElementById('intEventId').textContent); showToast('Copied'); });
 document.getElementById('revealKey').addEventListener('click', (e)=>{
   const el = document.getElementById('intKey');
   if(el.textContent.includes('•')){ el.textContent = 'Bearer '+TOKEN; e.target.textContent = 'Hide'; }
   else { el.textContent = 'Bearer ••••••••'; e.target.textContent = 'Show'; }
 });
 
-/* ---------- team tab ---------- */
-async function loadTeam(){
-  if(ROLE !== 'admin') return;
-  const wrap = document.getElementById('usersTableWrap');
-  wrap.innerHTML = '<div class="empty">Loading team…</div>';
-  const users = await api('/api/users', {}, false);
-  const body = users.map(u=>`
+/* ---------- Members tab (admin only, per event) ---------- */
+async function loadMembersTab(){
+  try{ TEAM_CACHE = await api('/api/team'); }catch(e){}
+  const sel = document.getElementById('memberPersonSelect');
+  sel.innerHTML = TEAM_CACHE.map(u=>`<option value="${u.id}">${escapeHtml(u.username)} (${escapeHtml(u.email||'no email')})</option>`).join('');
+  const wrap = document.getElementById('membersTableWrap');
+  wrap.innerHTML = '<div class="empty">Loading…</div>';
+  let members = [];
+  try{ members = await api(`/api/events/${CURRENT_EVENT.id}/members`); }catch(e){}
+  if(members.length===0){ wrap.innerHTML = '<div class="empty">Nobody assigned to this event yet.</div>'; return; }
+  wrap.innerHTML = `<table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr></thead><tbody>${
+    members.map(m=>`
     <tr>
-      <td>${escapeHtml(u.username)}${u.username===USERNAME?' <span class="tok">(you)</span>':''}</td>
-      <td><span class="pill pill-${u.role}">${u.role}</span></td>
-      <td class="tok">${new Date(u.created_at).toLocaleDateString()}</td>
+      <td>${escapeHtml(m.username)}</td>
+      <td class="tok">${escapeHtml(m.email||'—')}</td>
+      <td><span class="role-pill ${m.role}">${m.role}</span></td>
       <td>
-        ${u.username!==USERNAME ? `<button class="icon-btn" data-toggle="${u.id}" data-role="${u.role}">Make ${u.role==='admin'?'scanner':'admin'}</button>
-        <button class="icon-btn danger" data-del="${u.id}">Remove</button>` : ''}
+        <button class="icon-btn" data-swap="${m.id}" data-role="${m.role}">Make ${m.role==='employee'?'scanner':'employee'}</button>
+        <button class="icon-btn danger" data-removemem="${m.id}">Remove</button>
       </td>
-    </tr>`).join('');
-  wrap.innerHTML = `<table><thead><tr><th>Username</th><th>Role</th><th>Created</th><th></th></tr></thead><tbody>${body}</tbody></table>`;
-  wrap.querySelectorAll('[data-toggle]').forEach(b=>b.addEventListener('click', async ()=>{
-    const newRole = b.dataset.role === 'admin' ? 'scanner' : 'admin';
-    try{ await api(`/api/users/${b.dataset.toggle}`, {method:'PATCH', body: JSON.stringify({role:newRole})}, false); showToast('Role updated'); loadTeam(); }
+    </tr>`).join('')
+  }</tbody></table>`;
+  wrap.querySelectorAll('[data-swap]').forEach(b=>b.addEventListener('click', async ()=>{
+    const newRole = b.dataset.role==='employee' ? 'scanner' : 'employee';
+    try{ await api(`/api/events/${CURRENT_EVENT.id}/members/${b.dataset.swap}`, {method:'PATCH', body: JSON.stringify({role:newRole})}); showToast('Role updated'); loadMembersTab(); }
     catch(e){ showToast('Error: '+e.message); }
   }));
-  wrap.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', async ()=>{
-    if(!confirm('Remove this team member? They will no longer be able to log in.')) return;
-    try{ await api(`/api/users/${b.dataset.del}`, {method:'DELETE'}, false); showToast('Removed'); loadTeam(); }
+  wrap.querySelectorAll('[data-removemem]').forEach(b=>b.addEventListener('click', async ()=>{
+    try{ await api(`/api/events/${CURRENT_EVENT.id}/members/${b.dataset.removemem}`, {method:'DELETE'}); showToast('Removed from event'); loadMembersTab(); }
     catch(e){ showToast('Error: '+e.message); }
   }));
 }
-document.getElementById('newUserBtn').addEventListener('click', ()=>{
-  document.getElementById('newUserName').value=''; document.getElementById('newUserPass').value='';
-  document.getElementById('newUserRole').value='scanner';
-  document.getElementById('newUserModal').style.display='flex';
-});
-document.getElementById('newUserCancel').addEventListener('click', ()=>{ document.getElementById('newUserModal').style.display='none'; });
-document.getElementById('newUserCreate').addEventListener('click', async ()=>{
-  const username = document.getElementById('newUserName').value.trim();
-  const password = document.getElementById('newUserPass').value;
-  const role = document.getElementById('newUserRole').value;
-  if(!username || password.length < 6){ showToast('Enter a username and a password of at least 6 characters'); return; }
+document.getElementById('memberAddBtn').addEventListener('click', async ()=>{
+  const userId = document.getElementById('memberPersonSelect').value;
+  const role = document.getElementById('memberRoleSelect').value;
+  const statusEl = document.getElementById('memberAddStatus');
+  if(!userId){ statusEl.textContent = 'Add someone to Team Details first.'; return; }
   try{
-    await api('/api/users', {method:'POST', body: JSON.stringify({username, password, role})}, false);
-    document.getElementById('newUserModal').style.display='none';
-    showToast(`Account created for ${username}`);
-    loadTeam();
-  }catch(e){ showToast('Error: '+e.message); }
-});
-document.getElementById('cpBtn').addEventListener('click', async ()=>{
-  const oldPassword = document.getElementById('cpOld').value;
-  const newPassword = document.getElementById('cpNew').value;
-  const statusEl = document.getElementById('cpStatus');
-  try{
-    await api('/api/auth/change-password', {method:'POST', body: JSON.stringify({oldPassword, newPassword})}, false);
-    statusEl.textContent = 'Password updated.';
-    document.getElementById('cpOld').value=''; document.getElementById('cpNew').value='';
+    await api(`/api/events/${CURRENT_EVENT.id}/members`, {method:'POST', body: JSON.stringify({userId, role})});
+    statusEl.textContent = 'Added.';
+    loadMembersTab();
   }catch(e){ statusEl.textContent = 'Error: '+e.message; }
 });
 
-/* ---------- scanner ---------- */
+/* ================= SCANNER (unchanged logic from before) ================= */
 let stream = null, scanning = false, camPaused = false, resumeTimer = null;
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const ctx2d = canvas.getContext('2d', { willReadFrequently: true });
 const camSelect = document.getElementById('camSelect');
 const camDiag = document.getElementById('camDiag');
-
 function setDiag(msg){ camDiag.textContent = msg || ''; }
 
-async function populateCamList(){
-  try{
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const cams = devices.filter(d=>d.kind === 'videoinput');
-    camSelect.innerHTML = '';
-    if(cams.length > 1){
-      cams.forEach((c,i)=>{
-        const opt = document.createElement('option');
-        opt.value = c.deviceId; opt.textContent = c.label || `Camera ${i+1}`;
-        camSelect.appendChild(opt);
-      });
-      camSelect.style.display = 'inline-block';
-    } else { camSelect.style.display = 'none'; }
-  }catch(e){}
-}
-async function startCameraWithDeviceId(deviceId){
-  const attempts = [];
-  if(deviceId) attempts.push({ video: { deviceId: { exact: deviceId } } });
-  attempts.push({ video: { facingMode: { ideal: 'environment' } } });
-  attempts.push({ video: true });
-  let lastErr = null;
-  for(const constraints of attempts){
-    try{ return await navigator.mediaDevices.getUserMedia(constraints); }
-    catch(e){ lastErr = e; }
-  }
-  throw lastErr;
-}
-document.getElementById('camToggleBtn').addEventListener('click', async ()=>{
-  unlockAudio();
-  if(scanning){ stopCamera(); return; }
-  setDiag('');
-  if(typeof jsQR !== 'function'){
-    setDiag('The QR decoder failed to load. Try refreshing the page.'); return;
-  }
-  if(!window.isSecureContext){
-    setDiag('Camera needs a secure (https) connection — it will not work over plain http.'); return;
-  }
-  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
-    setDiag('This browser does not expose camera access here. Use the manual code entry below.'); return;
-  }
-  const btn = document.getElementById('camToggleBtn');
-  btn.disabled = true; btn.textContent = 'Requesting camera…';
-  try{
-    stream = await startCameraWithDeviceId(camSelect.value || null);
-    video.srcObject = stream; await video.play();
-    scanning = true; camPaused = false;
-    btn.textContent = 'Stop camera';
-    await populateCamList();
-    requestAnimationFrame(scanLoop);
-  }catch(e){
-    let msg = 'Camera unavailable — use the manual code entry below.';
-    if(e && e.name === 'NotAllowedError') msg = 'Camera permission was denied. Allow camera access for this page, then try again.';
-    else if(e && e.name === 'NotFoundError') msg = 'No camera was found on this device.';
-    else if(e && e.name === 'NotReadableError') msg = 'The camera is already in use by another app or tab.';
-    setDiag(msg); btn.textContent = 'Start camera';
-  }
-  btn.disabled = false;
-});
-camSelect.addEventListener('change', async ()=>{
-  if(!scanning) return;
-  stopCamera(); document.getElementById('camToggleBtn').click();
-});
-function stopCamera(){
-  scanning = false; camPaused = false;
-  clearTimeout(resumeTimer);
-  const w = document.getElementById('scanNextWrap'); if(w) w.style.display = 'none';
-  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
-  const btn = document.getElementById('camToggleBtn'); if(btn) btn.textContent = 'Start camera';
-}
-if(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices){ populateCamList(); }
-
-function pauseAfterScan(){
-  camPaused = true;
-  document.getElementById('scanNextWrap').style.display = 'block';
-  clearTimeout(resumeTimer);
-  resumeTimer = setTimeout(resumeScanning, 2200);
-}
-function resumeScanning(){
-  camPaused = false;
-  document.getElementById('scanNextWrap').style.display = 'none';
-  clearTimeout(resumeTimer);
-}
-document.getElementById('scanNextBtn').addEventListener('click', resumeScanning);
-
-function scanLoop(){
-  if(!scanning) return;
-  try{
-    if(!camPaused && video.readyState === video.HAVE_ENOUGH_DATA){
-      const maxW = 480;
-      const scale = video.videoWidth > maxW ? maxW / video.videoWidth : 1;
-      canvas.width = Math.round(video.videoWidth * scale); canvas.height = Math.round(video.videoHeight * scale);
-      ctx2d.drawImage(video,0,0,canvas.width,canvas.height);
-      const imgData = ctx2d.getImageData(0,0,canvas.width,canvas.height);
-      const code = jsQR(imgData.data, imgData.width, imgData.height);
-      if(code && code.data){ verifyToken(code.data.trim(), true); pauseAfterScan(); }
-    }
-  }catch(err){
-    console.error('scanLoop error', err); showToast('Scanner error: '+err.message); stopCamera(); return;
-  }
-  requestAnimationFrame(scanLoop);
-}
-document.getElementById('manualVerifyBtn').addEventListener('click', ()=>{
-  const val = document.getElementById('manualToken').value.trim();
-  if(!val){ showToast('Enter a code'); return; }
-  verifyToken(val, false);
-});
-document.getElementById('manualToken').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('manualVerifyBtn').click(); });
-
-function vibrate(pattern){ if(navigator.vibrate){ try{ navigator.vibrate(pattern); }catch(e){} } }
-
 let audioCtx = null;
-function unlockAudio(){
-  try{ audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); }catch(e){}
-}
+function unlockAudio(){ try{ audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); }catch(e){} }
 function beep(freq, duration){
   if(!audioCtx) return;
   try{
@@ -832,14 +941,95 @@ function beep(freq, duration){
   }catch(e){}
 }
 
-async function verifyToken(token, fromCamera){
+async function populateCamList(){
+  try{
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cams = devices.filter(d=>d.kind === 'videoinput');
+    camSelect.innerHTML = '';
+    if(cams.length > 1){
+      cams.forEach((c,i)=>{ const opt=document.createElement('option'); opt.value=c.deviceId; opt.textContent=c.label||`Camera ${i+1}`; camSelect.appendChild(opt); });
+      camSelect.style.display = 'inline-block';
+    } else { camSelect.style.display = 'none'; }
+  }catch(e){}
+}
+async function startCameraWithDeviceId(deviceId){
+  const attempts = [];
+  if(deviceId) attempts.push({ video: { deviceId: { exact: deviceId } } });
+  attempts.push({ video: { facingMode: { ideal: 'environment' } } });
+  attempts.push({ video: true });
+  let lastErr = null;
+  for(const constraints of attempts){ try{ return await navigator.mediaDevices.getUserMedia(constraints); }catch(e){ lastErr = e; } }
+  throw lastErr;
+}
+document.getElementById('camToggleBtn').addEventListener('click', async ()=>{
+  unlockAudio();
+  if(scanning){ stopCamera(); return; }
+  setDiag('');
+  if(typeof jsQR !== 'function'){ setDiag('The QR decoder failed to load. Try refreshing the page.'); return; }
+  if(!window.isSecureContext){ setDiag('Camera needs a secure (https) connection.'); return; }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ setDiag('This browser does not expose camera access here.'); return; }
+  const btn = document.getElementById('camToggleBtn'); btn.disabled = true; btn.textContent = 'Requesting camera…';
+  try{
+    stream = await startCameraWithDeviceId(camSelect.value || null);
+    video.srcObject = stream; await video.play();
+    scanning = true; camPaused = false; btn.textContent = 'Stop camera';
+    await populateCamList();
+    requestAnimationFrame(scanLoop);
+  }catch(e){
+    let msg = 'Camera unavailable — use the manual code entry below.';
+    if(e && e.name === 'NotAllowedError') msg = 'Camera permission was denied.';
+    else if(e && e.name === 'NotFoundError') msg = 'No camera was found on this device.';
+    else if(e && e.name === 'NotReadableError') msg = 'The camera is already in use by another app or tab.';
+    setDiag(msg); btn.textContent = 'Start camera';
+  }
+  btn.disabled = false;
+});
+camSelect.addEventListener('change', async ()=>{ if(!scanning) return; stopCamera(); document.getElementById('camToggleBtn').click(); });
+function stopCamera(){
+  scanning = false; camPaused = false; clearTimeout(resumeTimer);
+  const w = document.getElementById('scanNextWrap'); if(w) w.style.display = 'none';
+  if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+  const btn = document.getElementById('camToggleBtn'); if(btn) btn.textContent = 'Start camera';
+}
+if(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices){ populateCamList(); }
+function pauseAfterScan(){
+  camPaused = true;
+  document.getElementById('scanNextWrap').style.display = 'block';
+  clearTimeout(resumeTimer); resumeTimer = setTimeout(resumeScanning, 2200);
+}
+function resumeScanning(){ camPaused = false; document.getElementById('scanNextWrap').style.display = 'none'; clearTimeout(resumeTimer); }
+document.getElementById('scanNextBtn').addEventListener('click', resumeScanning);
+function scanLoop(){
+  if(!scanning) return;
+  try{
+    if(!camPaused && video.readyState === video.HAVE_ENOUGH_DATA){
+      const maxW = 480;
+      const scale = video.videoWidth > maxW ? maxW / video.videoWidth : 1;
+      canvas.width = Math.round(video.videoWidth * scale); canvas.height = Math.round(video.videoHeight * scale);
+      ctx2d.drawImage(video,0,0,canvas.width,canvas.height);
+      const imgData = ctx2d.getImageData(0,0,canvas.width,canvas.height);
+      const code = jsQR(imgData.data, imgData.width, imgData.height);
+      if(code && code.data){ verifyToken(code.data.trim()); pauseAfterScan(); }
+    }
+  }catch(err){ console.error('scanLoop error', err); showToast('Scanner error: '+err.message); stopCamera(); return; }
+  requestAnimationFrame(scanLoop);
+}
+document.getElementById('manualVerifyBtn').addEventListener('click', ()=>{
+  const val = document.getElementById('manualToken').value.trim();
+  if(!val){ showToast('Enter a code'); return; }
+  verifyToken(val);
+});
+document.getElementById('manualToken').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('manualVerifyBtn').click(); });
+function vibrate(pattern){ if(navigator.vibrate){ try{ navigator.vibrate(pattern); }catch(e){} } }
+
+async function verifyToken(token){
   const panel = document.getElementById('resultPanel');
   const title = document.getElementById('resultTitle');
   const sub = document.getElementById('resultSub');
   const meta = document.getElementById('resultMeta');
   panel.className='result-panel state-idle'; title.textContent='Checking…'; sub.textContent=''; meta.textContent='';
   try{
-    const r = await api('/api/verify', {method:'POST', body: JSON.stringify({token})}, false);
+    const r = await api('/api/verify', {method:'POST', body: JSON.stringify({token})});
     if(r.result === 'invalid'){
       panel.className='result-panel state-invalid'; title.textContent='Invalid pass';
       sub.textContent='This code was not found in the registered roster.'; meta.textContent=token;
@@ -861,29 +1051,20 @@ async function verifyToken(token, fromCamera){
   document.getElementById('manualToken').value='';
 }
 
-/* ---------- boot ---------- */
+/* ================= BOOT ================= */
 async function boot(){
   try{
-    const me = await api('/api/auth/me', {}, false);
-    ROLE = me.role; USERNAME = me.username;
-    localStorage.setItem('gk_role', ROLE); localStorage.setItem('gk_username', USERNAME);
-    applyRoleUI();
-    if(ROLE === 'admin'){
-      await loadEvents();
-      await refreshStats();
-      loadRoster();
-      fillIntegrationsTab();
-    }
-  }catch(e){ /* api() already redirects to gate on 401 */ }
+    const me = await api('/api/auth/me');
+    USERNAME = me.username; IS_ADMIN = me.isAdmin;
+    localStorage.setItem('gk_username', USERNAME); localStorage.setItem('gk_is_admin', String(IS_ADMIN));
+    await goToLanding();
+  }catch(e){ showScreen('screen-auth'); }
 }
-if(TOKEN){ document.getElementById('gate').style.display='none'; boot(); }
-else { showGate(); }
+if(TOKEN){ boot(); } else { showScreen('screen-auth'); }
 window.addEventListener('beforeunload', ()=>{ if(stream) stream.getTracks().forEach(t=>t.stop()); });
 
 if('serviceWorker' in navigator){
-  window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
-  });
+  window.addEventListener('load', ()=>{ navigator.serviceWorker.register('/service-worker.js').catch(()=>{}); });
 }
 </script>
 </body>

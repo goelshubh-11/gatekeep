@@ -5,20 +5,13 @@ const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: Number(process.env.SMTP_PORT || 465),
   secure: String(process.env.SMTP_SECURE || 'true') === 'true',
-
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
   }
 });
 
-async function sendPassEmail({
-  to,
-  name,
-  studentId,
-  token,
-  eventName
-}) {
+async function sendPassEmail({ to, name, studentId, token, eventName }) {
   if (!to) {
     throw new Error('No recipient email address provided');
   }
@@ -36,109 +29,55 @@ async function sendPassEmail({
     }
   });
 
-  const fromName =
-    process.env.SMTP_FROM_NAME || 'Gatekeep';
+  const fromName = process.env.SMTP_FROM_NAME || 'Gatekeep';
 
   const html = `
-    <div style="
-      font-family: Arial, sans-serif;
-      background: #0E1327;
-      padding: 32px;
-    ">
+    <div style="font-family:Arial,sans-serif;background:#0E1327;padding:32px;">
+      <div style="max-width:420px;margin:0 auto;background:#EDEDF4;border-radius:16px;overflow:hidden;">
 
-      <div style="
-        max-width: 420px;
-        margin: 0 auto;
-        background: #EDEDF4;
-        border-radius: 16px;
-        overflow: hidden;
-      ">
+        <div style="height:8px;background:#E8A33D;"></div>
 
-        <div style="
-          height: 8px;
-          background: #E8A33D;
-        "></div>
+        <div style="padding:20px 24px 4px;">
 
-        <div style="padding: 20px 24px 4px;">
-
-          <div style="
-            font-size: 10px;
-            text-transform: uppercase;
-            color: #6b6f85;
-            font-weight: bold;
-          ">
+          <div style="font-size:10px;text-transform:uppercase;color:#6b6f85;font-weight:bold;">
             ${escapeHtml(eventName)}
           </div>
 
-          <div style="
-            font-size: 20px;
-            font-weight: bold;
-            color: #0E1329;
-            margin-top: 4px;
-          ">
+          <div style="font-size:20px;font-weight:bold;color:#0E1329;margin-top:4px;">
             ${escapeHtml(name)}
           </div>
 
-          <div style="
-            font-family: monospace;
-            font-size: 12px;
-            color: #54586b;
-          ">
+          <div style="font-family:monospace;font-size:12px;color:#54586b;">
             ${escapeHtml(studentId || '')}
           </div>
 
         </div>
 
-        <div style="
-          text-align: center;
-          padding: 16px 0 8px;
-        ">
-          <img
-            src="cid:passqr"
-            width="220"
-            height="220"
-            alt="Entry QR code"
-          />
+        <div style="text-align:center;padding:16px 0 8px;">
+          <img src="cid:passqr" width="220" height="220" alt="Entry QR code" />
         </div>
 
-        <div style="
-          padding: 0 24px 20px;
-          text-align: center;
-        ">
+        <div style="padding:0 24px 20px;text-align:center;">
 
-          <div style="
-            font-family: monospace;
-            font-size: 11px;
-            color: #8b8fa3;
-          ">
+          <div style="font-family:monospace;font-size:11px;color:#8b8fa3;">
             ${escapeHtml(token)}
           </div>
 
-          <div style="
-            font-size: 12px;
-            color: #54586b;
-            margin-top: 10px;
-          ">
-            Show this QR code at the entry gate.
-            Valid for one scan only.
+          <div style="font-size:12px;color:#54586b;margin-top:10px;">
+            Show this QR code at the entry gate. Valid for one scan only.
           </div>
 
         </div>
 
       </div>
-
     </div>
   `;
 
   const info = await transporter.sendMail({
     from: `"${fromName}" <${process.env.SMTP_USER}>`,
-
     to,
-
     subject: `Your entry pass — ${eventName}`,
-
     html,
-
     attachments: [
       {
         filename: 'entry-pass.png',
@@ -154,16 +93,13 @@ async function sendPassEmail({
 }
 
 function escapeHtml(value) {
-  return String(value == null ? '' : value)
-    .replace(/[&<>"']/g, (character) => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
-    }[character]));
+  return String(value == null ? '' : value).replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[character]));
 }
 
-module.exports = {
-  sendPassEmail
-};
+module.exports = { sendPassEmail };

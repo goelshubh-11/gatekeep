@@ -1,0 +1,16 @@
+{
+  "name": "Gatekeep — Event Check-in",
+  "short_name": "Gatekeep",
+  "description": "Event registration, automatic QR email, and gate scanner",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#171331",
+  "theme_color": "#171331",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

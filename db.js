@@ -242,12 +242,20 @@ function deleteUser(id) {
 
 // ================= event membership =================
 function listEventMembers(eventId) {
-  return db.prepare(`
-    SELECT u.id, u.username, u.email, em.role
+  const rows = db.prepare(`
+    SELECT u.id, u.username, u.email, u.is_admin, em.role AS assigned_role
     FROM event_members em JOIN users u ON u.id = em.user_id
     WHERE em.event_id = ?
     ORDER BY u.username ASC
   `).all(eventId);
+  // If someone was assigned employee/scanner and later became a global
+  // admin, show their real current status (ADMIN), not the stale
+  // event-level role that was set before the promotion.
+  return rows.map((r) => ({
+    id: r.id, username: r.username, email: r.email,
+    is_admin: !!r.is_admin,
+    role: r.is_admin ? 'admin' : r.assigned_role
+  }));
 }
 function getEventMemberRole(eventId, userId) {
   const row = db.prepare('SELECT role FROM event_members WHERE event_id = ? AND user_id = ?').get(eventId, userId);

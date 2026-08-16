@@ -127,7 +127,7 @@ app.post('/api/auth/login', (req, res) => {
 
 app.get('/api/auth/me', requireAuth, (req, res) => {
   const user = getUserById(req.user.sub);
-  res.json({ username: user.username, email: user.email, isAdmin: !!user.is_admin, isSuperAdmin: !!user.is_super_admin });
+  res.json({ id: user.id, username: user.username, email: user.email, isAdmin: !!user.is_admin, isSuperAdmin: !!user.is_super_admin });
 });
 
 app.post('/api/auth/change-password', requireAuth, (req, res) => {
@@ -379,8 +379,17 @@ app.get('/api/events/:id/members', requireEventRoleByParam('employee'), (req, re
 app.post('/api/events/:id/members', requireEventRoleByParam('employee'), (req, res) => {
   const { userId, role } = req.body || {};
   if (!['employee', 'scanner'].includes(role)) return res.status(400).json({ error: 'role must be employee or scanner' });
+  if (!req.user.isAdmin && role === 'employee') {
+    return res.status(403).json({ error: 'Employees can only add scanners, not other employees' });
+  }
+  if (userId === req.user.sub) {
+    return res.status(400).json({ error: 'You cannot add yourself' });
+  }
   const user = getUserById(userId);
   if (!user) return res.status(404).json({ error: 'That person is not in Team Details yet - add them there first' });
+  if (user.is_admin) {
+    return res.status(400).json({ error: 'Admins already have access to every event automatically - no need to add them' });
+  }
   addOrUpdateEventMember(req.event.id, userId, role);
   res.json({ ok: true });
 });

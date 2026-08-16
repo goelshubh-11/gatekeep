@@ -479,6 +479,7 @@ let USERNAME = localStorage.getItem('gk_username') || '';
 let CURRENT_EVENT = null; // full event object incl. myRole
 let EVENTS_CACHE = [];
 let TEAM_CACHE = [];
+let ME_ID = localStorage.getItem('gk_me_id') || '';
 
 function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
@@ -576,8 +577,8 @@ function completeLogin(token, username, isAdmin, isSuperAdmin){
   goToLanding();
 }
 function doLogout(msg){
-  TOKEN=''; USERNAME=''; IS_ADMIN=false; IS_SUPER_ADMIN=false; CURRENT_EVENT=null;
-  localStorage.removeItem('gk_token'); localStorage.removeItem('gk_username'); localStorage.removeItem('gk_is_admin'); localStorage.removeItem('gk_is_super_admin');
+  TOKEN=''; USERNAME=''; IS_ADMIN=false; IS_SUPER_ADMIN=false; ME_ID=''; CURRENT_EVENT=null;
+  localStorage.removeItem('gk_token'); localStorage.removeItem('gk_username'); localStorage.removeItem('gk_is_admin'); localStorage.removeItem('gk_is_super_admin'); localStorage.removeItem('gk_me_id');
   stopCamera();
   document.getElementById('loginError').textContent = msg || '';
   document.getElementById('loginIdentifier').value=''; document.getElementById('loginPassword').value='';
@@ -916,8 +917,21 @@ document.getElementById('revealKey').addEventListener('click', (e)=>{
 /* ---------- Members tab: admin+employee can add, only admin can manage existing ---------- */
 async function loadMembersTab(){
   try{ TEAM_CACHE = await api('/api/team'); }catch(e){}
+
+  // Can't add someone who's already a global admin (they're already a
+  // de-facto member of every event) or yourself.
+  const addable = TEAM_CACHE.filter(u => !u.is_admin && u.id !== ME_ID);
   const sel = document.getElementById('memberPersonSelect');
-  sel.innerHTML = TEAM_CACHE.map(u=>`<option value="${u.id}">${escapeHtml(u.username)} (${escapeHtml(u.email||'no email')})</option>`).join('');
+  sel.innerHTML = addable.length
+    ? addable.map(u=>`<option value="${u.id}">${escapeHtml(u.username)} (${escapeHtml(u.email||'no email')})</option>`).join('')
+    : `<option value="">No one available to add</option>`;
+
+  // Employees can only add scanners - admins can add either.
+  const roleSel = document.getElementById('memberRoleSelect');
+  roleSel.innerHTML = IS_ADMIN
+    ? `<option value="employee">Employee (register, roster, scan)</option><option value="scanner">Scanner (gate scanner only)</option>`
+    : `<option value="scanner">Scanner (gate scanner only)</option>`;
+
   const wrap = document.getElementById('membersTableWrap');
   wrap.innerHTML = '<div class="empty">Loading…</div>';
   let members = [];
@@ -929,9 +943,9 @@ async function loadMembersTab(){
       <td>${escapeHtml(m.username)}</td>
       <td class="tok">${escapeHtml(m.email||'—')}</td>
       <td><span class="role-pill ${m.role}">${m.role}</span></td>
-      <td>${IS_ADMIN ? `
+      <td>${(IS_ADMIN && !m.is_admin) ? `
         <button class="icon-btn" data-swap="${m.id}" data-role="${m.role}">Make ${m.role==='employee'?'scanner':'employee'}</button>
-        <button class="icon-btn danger" data-removemem="${m.id}">Remove</button>` : ''}
+        <button class="icon-btn danger" data-removemem="${m.id}">Remove</button>` : (m.is_admin ? '<span class="tok">Managed via Team Details</span>' : '')}
       </td>
     </tr>`).join('')
   }</tbody></table>`;
@@ -1092,8 +1106,8 @@ async function verifyToken(token){
 async function boot(){
   try{
     const me = await api('/api/auth/me');
-    USERNAME = me.username; IS_ADMIN = me.isAdmin; IS_SUPER_ADMIN = !!me.isSuperAdmin;
-    localStorage.setItem('gk_username', USERNAME); localStorage.setItem('gk_is_admin', String(IS_ADMIN)); localStorage.setItem('gk_is_super_admin', String(IS_SUPER_ADMIN));
+    USERNAME = me.username; IS_ADMIN = me.isAdmin; IS_SUPER_ADMIN = !!me.isSuperAdmin; ME_ID = me.id;
+    localStorage.setItem('gk_username', USERNAME); localStorage.setItem('gk_is_admin', String(IS_ADMIN)); localStorage.setItem('gk_is_super_admin', String(IS_SUPER_ADMIN)); localStorage.setItem('gk_me_id', ME_ID);
     await goToLanding();
   }catch(e){ showScreen('screen-auth'); }
 }

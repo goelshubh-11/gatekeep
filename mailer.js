@@ -1,6 +1,18 @@
 const QRCode = require('qrcode');
 
-async function sendPassEmail({ to, name, studentId, token, eventName }) {
+// Shared by the email (attachment) and the public /api/qr/:token route (the
+// inline <img> in the email points at that route instead of embedding the
+// image data directly - see sendPassEmail below for why).
+async function generateQrPngBuffer(token) {
+  return QRCode.toBuffer(token, {
+    width: 480,
+    margin: 2,
+    errorCorrectionLevel: 'M',
+    color: { dark: '#000000', light: '#FFFFFF' }
+  });
+}
+
+async function sendPassEmail({ to, name, studentId, token, eventName, baseUrl }) {
   if (!to) {
     throw new Error('No recipient email address provided');
   }
@@ -12,14 +24,18 @@ async function sendPassEmail({ to, name, studentId, token, eventName }) {
   }
 
   // Real PNG, not an HTML table - this is what makes it reliably scannable.
-  const qrBuffer = await QRCode.toBuffer(token, {
-    width: 480,
-    margin: 2,
-    errorCorrectionLevel: 'M',
-    color: { dark: '#000000', light: '#FFFFFF' }
-  });
+  const qrBuffer = await generateQrPngBuffer(token);
   const qrBase64 = qrBuffer.toString('base64');
   const attachmentName = 'entry-pass.png';
+  // Inline image: a real hosted URL, not a cid: reference (Brevo's API
+  // doesn't support those) and not a base64 data: URI either - most mail
+  // clients (Gmail, Outlook, corporate filters) strip or refuse to render
+  // embedded base64 images, so it silently showed nothing even though the
+  // HTML was technically valid. A normal https:// image URL is the one
+  // format every mail client actually knows how to load, same as any
+  // ordinary "load images" prompt they already show every day. The PNG
+  // attachment stays too, as an offline fallback if images are blocked.
+  const qrImageUrl = baseUrl ? `${baseUrl}/api/qr/${encodeURIComponent(token)}` : null;
 
   const html = `
     <!DOCTYPE html>
@@ -42,7 +58,7 @@ async function sendPassEmail({ to, name, studentId, token, eventName }) {
                 </tr>
                 <tr>
                   <td align="center" style="padding:20px 10px;">
-                    <img src="data:image/png;base64,${qrBase64}" width="260" height="260" alt="Entry QR code" style="display:block;border:10px solid #FFFFFF;background:#FFFFFF;" />
+                    <img src="${qrImageUrl || `data:image/png;base64,${qrBase64}`}" width="260" height="260" alt="Entry QR code" style="display:block;border:10px solid #FFFFFF;background:#FFFFFF;" />
                   </td>
                 </tr>
                 <tr>
@@ -162,4 +178,4 @@ function escapeHtml(value) {
   }[c]));
 }
 
-module.exports = { sendPassEmail, sendOtpEmail };
+module.exports = { sendPassEmail, sendOtpEmail, generateQrPngBuffer };

@@ -1134,10 +1134,14 @@ async function verifyToken(token, fromCamera){
   const meta = document.getElementById('resultMeta');
   panel.className='result-panel state-idle'; title.textContent='Checking…'; sub.textContent=''; meta.textContent='';
   try{
-    const r = await api('/api/verify', {method:'POST', body: JSON.stringify({token})});
+    const r = await api('/api/verify', {method:'POST', body: JSON.stringify({token})}, true);
     if(r.result === 'invalid'){
       panel.className='result-panel state-invalid'; title.textContent='Invalid pass';
       sub.textContent='This code was not found in the registered roster.'; meta.textContent=token;
+      vibrate(160); beep(140, 0.25);
+    }else if(r.result === 'wrong-event'){
+      panel.className='result-panel state-invalid'; title.textContent='Wrong event';
+      sub.textContent='This pass was issued for a different event and is not valid here.'; meta.textContent=token;
       vibrate(160); beep(140, 0.25);
     }else if(r.result === 'already'){
       panel.className='result-panel state-used'; title.textContent='Already scanned';

@@ -313,9 +313,14 @@ function checkAdminKey(plain) {
 }
 
 // ================= scan dedupe =================
-const verifyTxn = db.transaction((token) => {
+// eventId is the event currently selected in the Gate Scanner — a token
+// that exists but belongs to a DIFFERENT event must never verify here, even
+// if the scanning staff member happens to also have access to that other
+// event (e.g. an admin, who has access to every event by default).
+const verifyTxn = db.transaction((token, eventId) => {
   const rec = db.prepare('SELECT * FROM students WHERE token = ?').get(token);
   if (!rec) return { result: 'invalid' };
+  if (rec.event_id !== eventId) return { result: 'wrong-event' };
   if (rec.status === 'used') return { result: 'already', record: rec };
   const usedAt = Date.now();
   db.prepare('UPDATE students SET status = ?, used_at = ? WHERE token = ?').run('used', usedAt, token);

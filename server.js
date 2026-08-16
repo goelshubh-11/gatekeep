@@ -13,7 +13,7 @@ const {
   getAdminKeyHash, setAdminKeyHash, checkAdminKey,
   verifyTxn
 } = require('./db');
-const { sendPassEmail, sendOtpEmail } = require('./mailer');
+const { sendPassEmail, sendOtpEmail, generateQrPngBuffer } = require('./mailer');
 const { signToken, signSignupToken, verifyToken, hashPassword, checkPassword } = require('./auth');
 
 if (!process.env.JWT_SECRET) {
@@ -22,11 +22,37 @@ if (!process.env.JWT_SECRET) {
 }
 
 const app = express();
+// Railway (and most PaaS hosts) terminate HTTPS at a reverse proxy and
+// forward plain HTTP internally, so without this Express thinks every
+// request is insecure http://. That matters for building the QR image URL
+// embedded in confirmation emails (see /api/qr/:token below) - it needs to
+// be a real https:// link.
+app.set('trust proxy', true);
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 function genToken() { return crypto.randomBytes(9).toString('hex').toUpperCase(); }
+function baseUrlFor(req) { return `${req.protocol}://${req.get('host')}`; }
+
+// Public - deliberately no auth. Only ever encodes the random pass token
+// itself (see README: "QR codes only encode a random pass code, never
+// personal data"), so serving the raw QR image to anyone who has the token
+// leaks nothing new. This is what the confirmation email's inline <img>
+// points at, since neither cid: attachments nor base64 data: URIs render
+// reliably across mail clients.
+app.get('/api/qr/:token', async (req, res) => {
+  try {
+    const token = String(req.params.token || '').trim().toUpperCase();
+    if (!token) return res.status(400).end();
+    const buf = await generateQrPngBuffer(token);
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.send(buf);
+  } catch (e) {
+    res.status(500).end();
+  }
+});
 
 // ================= auth middleware =================
 function requireAuth(req, res, next) {
@@ -186,7 +212,7 @@ app.post('/api/students', requireEventRole('employee'), async (req, res) => {
   let mailStatus = 'skipped', mailError = null;
   if (email) {
     try {
-      await sendPassEmail({ to: email, name, studentId, token, eventName: req.event.name });
+      await sendPassEmail({ to: email, name, studentId, token, eventName: req.event.name, baseUrl: baseUrlFor(req) });
       db.prepare('UPDATE students SET mail_sent = 1 WHERE token = ?').run(token);
       mailStatus = 'sent';
     } catch (e) {
@@ -213,7 +239,7 @@ app.post('/api/students/bulk', requireEventRole('employee'), async (req, res) =>
     let mailStatus = 'skipped';
     if (row.email) {
       try {
-        await sendPassEmail({ to: row.email, name, studentId: row.id, token, eventName: req.event.name });
+        await sendPassEmail({ to: row.email, name, studentId: row.id, token, eventName: req.event.name, baseUrl: baseUrlFor(req) });
         db.prepare('UPDATE students SET mail_sent = 1 WHERE token = ?').run(token);
         mailStatus = 'sent';
       } catch (e) {
@@ -235,7 +261,7 @@ app.post('/api/students/:token/resend', requireAuth, async (req, res) => {
   if (!rec.email) return res.status(400).json({ error: 'no email on file' });
   const event = getEvent(rec.event_id) || { name: 'Event' };
   try {
-    await sendPassEmail({ to: rec.email, name: rec.name, studentId: rec.student_id, token: rec.token, eventName: event.name });
+    await sendPassEmail({ to: rec.email, name: rec.name, studentId: rec.student_id, token: rec.token, eventName: event.name, baseUrl: baseUrlFor(req) });
     db.prepare('UPDATE students SET mail_sent = 1, mail_error = NULL WHERE token = ?').run(rec.token);
     res.json({ ok: true });
   } catch (e) {
@@ -278,16 +304,16 @@ app.get('/api/export.csv', requireEventRole('employee'), (req, res) => {
   res.send(csv);
 });
 
-// ================= scan / verify (scanner+, event-scoped after lookup) =================
-app.post('/api/verify', requireAuth, (req, res) => {
+// ================= scan / verify (scanner+, event-scoped) =================
+// Event-scoped exactly like /api/students etc: requires x-event-id and
+// checks the scanner has access to THAT event. Previously this looked the
+// token up globally with no event check at all, so a QR issued for Event A
+// would verify as valid at Event B's gate for any staff member who also had
+// access to Event A (which every admin always does) — a real security hole.
+app.post('/api/verify', requireEventRole('scanner'), (req, res) => {
   const token = (req.body?.token || '').trim().toUpperCase();
   if (!token) return res.status(400).json({ error: 'token required' });
-  const rec = db.prepare('SELECT * FROM students WHERE token = ?').get(token);
-  if (!rec) return res.json({ result: 'invalid' });
-  if (!userHasEventAccess(req.user, rec.event_id, 'scanner')) {
-    return res.status(403).json({ error: 'You do not have scanner access to this event' });
-  }
-  res.json(verifyTxn(token));
+  res.json(verifyTxn(token, req.eventId));
 });
 
 // ================= Team Details (central directory) =================

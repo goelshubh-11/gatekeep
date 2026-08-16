@@ -282,10 +282,19 @@
 
     <div class="panel">
       <h2>Add someone to the directory</h2>
-      <p class="sub">Pre-add a person by email before they've signed up. Once they sign up with this same email, they'll automatically get whatever event access you've already assigned them.</p>
+      <p class="sub">Leave password blank to let them sign up and verify their own email — or set one now so they can log in immediately, no signup needed. Granting the Admin role here requires the admin secret key.</p>
       <div class="row3">
         <div class="field"><label>Name</label><input type="text" id="tdName"></div>
         <div class="field"><label>Email</label><input type="email" id="tdEmail"></div>
+        <div class="field"><label>Global role</label>
+          <select class="plainselect" id="tdRole">
+            <option value="member">Member (no global rights)</option>
+            <option value="admin">Admin (full access, all events)</option>
+          </select>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Set a password (optional)</label><input type="password" id="tdPassword" placeholder="Leave blank for them to sign up themselves"></div>
         <div class="field"><label>&nbsp;</label><button class="btn btn-primary" id="tdAddBtn">Add to directory</button></div>
       </div>
       <div class="footnote" id="tdAddStatus"></div>
@@ -318,8 +327,8 @@
       <button class="active" data-view="admin" data-minrole="employee">Register</button>
       <button data-view="scan" data-minrole="scanner">Gate Scanner</button>
       <button data-view="roster" data-minrole="employee">Roster</button>
-      <button data-view="integrations" data-minrole="employee">Integrations</button>
-      <button data-view="members" data-minrole="admin">Members</button>
+      <button data-view="integrations" data-minrole="admin">Integrations</button>
+      <button data-view="members" data-minrole="employee">Members</button>
     </nav>
 
     <div class="view active" id="view-admin">
@@ -465,6 +474,7 @@ Rohan Mehta, 21CS0198, rohan.mehta@college.edu"></textarea></div>
 <script>
 let TOKEN = localStorage.getItem('gk_token') || '';
 let IS_ADMIN = localStorage.getItem('gk_is_admin') === 'true';
+let IS_SUPER_ADMIN = localStorage.getItem('gk_is_super_admin') === 'true';
 let USERNAME = localStorage.getItem('gk_username') || '';
 let CURRENT_EVENT = null; // full event object incl. myRole
 let EVENTS_CACHE = [];
@@ -508,7 +518,7 @@ document.getElementById('loginBtn').addEventListener('click', async ()=>{
     const res = await fetch('/api/auth/login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({identifier, password})});
     const data = await res.json();
     if(!res.ok){ err.textContent = data.error || 'Login failed.'; return; }
-    completeLogin(data.token, data.username, data.isAdmin);
+    completeLogin(data.token, data.username, data.isAdmin, data.isSuperAdmin);
   }catch(e){ err.textContent = 'Could not reach the server.'; }
 });
 document.getElementById('loginPassword').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('loginBtn').click(); });
@@ -553,20 +563,21 @@ document.getElementById('suFinishBtn').addEventListener('click', async ()=>{
     const res = await fetch('/api/auth/set-password', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+signupToken}, body: JSON.stringify({password:p1, confirmPassword:p2})});
     const data = await res.json();
     if(!res.ok){ err.textContent = data.error || 'Could not create account.'; return; }
-    completeLogin(data.token, data.username, data.isAdmin);
+    completeLogin(data.token, data.username, data.isAdmin, data.isSuperAdmin);
   }catch(e){ err.textContent = 'Could not reach the server.'; }
 });
 
-function completeLogin(token, username, isAdmin){
-  TOKEN = token; USERNAME = username; IS_ADMIN = isAdmin;
+function completeLogin(token, username, isAdmin, isSuperAdmin){
+  TOKEN = token; USERNAME = username; IS_ADMIN = isAdmin; IS_SUPER_ADMIN = !!isSuperAdmin;
   localStorage.setItem('gk_token', TOKEN);
   localStorage.setItem('gk_username', USERNAME);
   localStorage.setItem('gk_is_admin', String(IS_ADMIN));
+  localStorage.setItem('gk_is_super_admin', String(IS_SUPER_ADMIN));
   goToLanding();
 }
 function doLogout(msg){
-  TOKEN=''; USERNAME=''; IS_ADMIN=false; CURRENT_EVENT=null;
-  localStorage.removeItem('gk_token'); localStorage.removeItem('gk_username'); localStorage.removeItem('gk_is_admin');
+  TOKEN=''; USERNAME=''; IS_ADMIN=false; IS_SUPER_ADMIN=false; CURRENT_EVENT=null;
+  localStorage.removeItem('gk_token'); localStorage.removeItem('gk_username'); localStorage.removeItem('gk_is_admin'); localStorage.removeItem('gk_is_super_admin');
   stopCamera();
   document.getElementById('loginError').textContent = msg || '';
   document.getElementById('loginIdentifier').value=''; document.getElementById('loginPassword').value='';
@@ -675,12 +686,20 @@ document.getElementById('akSaveBtn').addEventListener('click', async ()=>{
 document.getElementById('tdAddBtn').addEventListener('click', async ()=>{
   const name = document.getElementById('tdName').value.trim();
   const email = document.getElementById('tdEmail').value.trim();
+  const password = document.getElementById('tdPassword').value;
+  const role = document.getElementById('tdRole').value;
   const statusEl = document.getElementById('tdAddStatus');
   if(!email.includes('@')){ statusEl.textContent = 'Enter a valid email.'; return; }
+  if(password && password.length < 6){ statusEl.textContent = 'Password must be at least 6 characters (or leave it blank).'; return; }
+  let adminKey = undefined;
+  if(role === 'admin'){
+    adminKey = await askForAdminKey('Grant admin role', `Adding "${name||email}" as a global admin requires the admin secret key.`);
+    if(adminKey === null) return;
+  }
   try{
-    await api('/api/team', {method:'POST', body: JSON.stringify({username:name, email})});
-    statusEl.textContent = 'Added to directory.';
-    document.getElementById('tdName').value=''; document.getElementById('tdEmail').value='';
+    await api('/api/team', {method:'POST', body: JSON.stringify({username:name, email, password: password||undefined, role, adminKey})});
+    statusEl.textContent = password ? 'Added — they can log in immediately.' : 'Added to directory — they can sign up themselves now.';
+    document.getElementById('tdName').value=''; document.getElementById('tdEmail').value=''; document.getElementById('tdPassword').value=''; document.getElementById('tdRole').value='member';
     loadTeamTable();
   }catch(e){ statusEl.textContent = 'Error: '+e.message; }
 });
@@ -692,19 +711,37 @@ async function loadTeamTable(){
   }catch(e){ wrap.innerHTML = '<div class="empty">Could not load team.</div>'; return; }
   if(TEAM_CACHE.length===0){ wrap.innerHTML='<div class="empty">Nobody in the directory yet.</div>'; return; }
   wrap.innerHTML = `<table><thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Global role</th><th></th></tr></thead><tbody>${
-    TEAM_CACHE.map(u=>`
+    TEAM_CACHE.map(u=>{
+      const roleLabel = u.is_super_admin ? 'main admin' : (u.is_admin ? 'admin' : 'member');
+      const rolePillClass = u.is_admin ? 'admin' : 'employee';
+      let actions = '';
+      if(u.is_super_admin){
+        actions = '<span class="tok">Protected — cannot be changed</span>';
+      } else if(u.username === USERNAME){
+        actions = '<span class="tok">(you)</span>';
+      } else if(u.is_admin){
+        // demoting/removing an existing admin is main-admin-only
+        actions = IS_SUPER_ADMIN ? `
+          <button class="icon-btn" data-toggle-admin="${u.id}" data-isadmin="1">Remove admin</button>
+          <button class="icon-btn danger" data-remove="${u.id}">Remove</button>` : `<span class="tok">Only the main admin can change this</span>`;
+      } else {
+        // promoting a member, or removing a member entirely: open to any admin
+        actions = `
+          <button class="icon-btn" data-toggle-admin="${u.id}" data-isadmin="0">Make admin</button>
+          <button class="icon-btn danger" data-remove="${u.id}">Remove</button>`;
+      }
+      return `
     <tr>
-      <td>${escapeHtml(u.username)}${u.username===USERNAME?' <span class="tok">(you)</span>':''}</td>
+      <td>${escapeHtml(u.username)}</td>
       <td class="tok">${escapeHtml(u.email||'—')}</td>
       <td>${u.verified ? `<span class="pill pill-used">Active</span>` : `<span class="pill pill-unused">Not signed up yet</span>`}</td>
-      <td><span class="role-pill ${u.is_admin?'admin':'employee'}">${u.is_admin?'admin':'member'}</span></td>
-      <td>${u.username!==USERNAME ? `
-        <button class="icon-btn" data-toggle-admin="${u.id}" data-isadmin="${u.is_admin}">${u.is_admin?'Remove admin':'Make admin'}</button>
-        <button class="icon-btn danger" data-remove="${u.id}">Remove</button>` : ''}</td>
-    </tr>`).join('')
+      <td><span class="role-pill ${rolePillClass}">${roleLabel}</span></td>
+      <td>${actions}</td>
+    </tr>`;
+    }).join('')
   }</tbody></table>`;
   wrap.querySelectorAll('[data-toggle-admin]').forEach(b=>b.addEventListener('click', async ()=>{
-    const makeAdmin = b.dataset.isadmin !== '1' && b.dataset.isadmin !== 'true';
+    const makeAdmin = b.dataset.isadmin !== '1';
     const key = await askForAdminKey(makeAdmin?'Promote to admin':'Remove admin access', 'Enter the admin secret key to confirm.');
     if(key===null) return;
     try{
@@ -876,7 +913,7 @@ document.getElementById('revealKey').addEventListener('click', (e)=>{
   else { el.textContent = 'Bearer ••••••••'; e.target.textContent = 'Show'; }
 });
 
-/* ---------- Members tab (admin only, per event) ---------- */
+/* ---------- Members tab: admin+employee can add, only admin can manage existing ---------- */
 async function loadMembersTab(){
   try{ TEAM_CACHE = await api('/api/team'); }catch(e){}
   const sel = document.getElementById('memberPersonSelect');
@@ -892,9 +929,9 @@ async function loadMembersTab(){
       <td>${escapeHtml(m.username)}</td>
       <td class="tok">${escapeHtml(m.email||'—')}</td>
       <td><span class="role-pill ${m.role}">${m.role}</span></td>
-      <td>
+      <td>${IS_ADMIN ? `
         <button class="icon-btn" data-swap="${m.id}" data-role="${m.role}">Make ${m.role==='employee'?'scanner':'employee'}</button>
-        <button class="icon-btn danger" data-removemem="${m.id}">Remove</button>
+        <button class="icon-btn danger" data-removemem="${m.id}">Remove</button>` : ''}
       </td>
     </tr>`).join('')
   }</tbody></table>`;
@@ -1055,8 +1092,8 @@ async function verifyToken(token){
 async function boot(){
   try{
     const me = await api('/api/auth/me');
-    USERNAME = me.username; IS_ADMIN = me.isAdmin;
-    localStorage.setItem('gk_username', USERNAME); localStorage.setItem('gk_is_admin', String(IS_ADMIN));
+    USERNAME = me.username; IS_ADMIN = me.isAdmin; IS_SUPER_ADMIN = !!me.isSuperAdmin;
+    localStorage.setItem('gk_username', USERNAME); localStorage.setItem('gk_is_admin', String(IS_ADMIN)); localStorage.setItem('gk_is_super_admin', String(IS_SUPER_ADMIN));
     await goToLanding();
   }catch(e){ showScreen('screen-auth'); }
 }

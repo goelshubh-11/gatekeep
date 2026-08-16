@@ -6,7 +6,7 @@ const SECRET = process.env.JWT_SECRET;
 // Normal login session (12h)
 function signToken(user) {
   return jwt.sign(
-    { sub: user.id, username: user.username, isAdmin: !!user.is_admin },
+    { sub: user.id, username: user.username, isAdmin: !!user.is_admin, isSuperAdmin: !!user.is_super_admin },
     SECRET,
     { expiresIn: '12h' }
   );

@@ -6,7 +6,7 @@ const path = require('path');
 const {
   db, listEvents, getEvent, createEvent, renameEvent,
   listAllUsers, getUserById, getUserByEmailFull, getUserByUsernameFull, countAdmins,
-  adminAddPendingUser, startSignup, verifyOtp, setPassword, updateUserPassword,
+  adminAddUser, startSignup, verifyOtp, setPassword, updateUserPassword,
   setUserAdmin, deleteUser,
   listEventMembers, getEventMemberRole, addOrUpdateEventMember, removeEventMember,
   listEventsForUser, userHasEventAccess,
@@ -26,9 +26,7 @@ app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-function genToken() {
-  return crypto.randomBytes(9).toString('hex').toUpperCase();
-}
+function genToken() { return crypto.randomBytes(9).toString('hex').toUpperCase(); }
 
 // ================= auth middleware =================
 function requireAuth(req, res, next) {
@@ -37,7 +35,7 @@ function requireAuth(req, res, next) {
   const token = bearer || req.query.token || '';
   const payload = token && verifyToken(token);
   if (!payload || payload.purpose) return res.status(401).json({ error: 'Not authenticated' });
-  req.user = payload; // { sub, username, isAdmin }
+  req.user = payload; // { sub, username, isAdmin, isSuperAdmin }
   next();
 }
 function requireAdmin(req, res, next) {
@@ -46,8 +44,8 @@ function requireAdmin(req, res, next) {
     next();
   });
 }
-// Access to a specific event's data. minRole 'scanner' = scanner or employee or admin.
-// minRole 'employee' = employee or admin only.
+// minRole 'scanner' = scanner/employee/admin. minRole 'employee' = employee/admin.
+// Admins are de-facto members of every event, always.
 function requireEventRole(minRole) {
   return (req, res, next) => {
     requireAuth(req, res, () => {
@@ -68,9 +66,7 @@ function requireAdminKey(req, res, next) {
   if (!getAdminKeyHash()) {
     return res.status(400).json({ error: 'No admin secret key has been set yet. Set one from Team Details first.' });
   }
-  if (!checkAdminKey(key)) {
-    return res.status(403).json({ error: 'Incorrect admin secret key' });
-  }
+  if (!checkAdminKey(key)) return res.status(403).json({ error: 'Incorrect admin secret key' });
   next();
 }
 
@@ -99,8 +95,7 @@ app.post('/api/auth/verify-otp', (req, res) => {
   const cleanEmail = String(email || '').trim().toLowerCase();
   const user = verifyOtp(cleanEmail, otp);
   if (!user) return res.status(400).json({ error: 'Incorrect or expired code' });
-  const signupToken = signSignupToken(user);
-  res.json({ signupToken });
+  res.json({ signupToken: signSignupToken(user) });
 });
 
 app.post('/api/auth/set-password', (req, res) => {
@@ -115,8 +110,8 @@ app.post('/api/auth/set-password', (req, res) => {
   if (password !== confirmPassword) return res.status(400).json({ error: 'Passwords do not match' });
   setPassword(payload.sub, hashPassword(password));
   const user = getUserById(payload.sub);
-  const loginToken = signToken({ id: user.id, username: user.username, is_admin: user.is_admin });
-  res.json({ token: loginToken, username: user.username, isAdmin: !!user.is_admin });
+  const loginToken = signToken(user);
+  res.json({ token: loginToken, username: user.username, isAdmin: !!user.is_admin, isSuperAdmin: !!user.is_super_admin });
 });
 
 app.post('/api/auth/login', (req, res) => {
@@ -127,12 +122,12 @@ app.post('/api/auth/login', (req, res) => {
     return res.status(401).json({ error: 'Incorrect email/username or password' });
   }
   const token = signToken(user);
-  res.json({ token, username: user.username, isAdmin: !!user.is_admin });
+  res.json({ token, username: user.username, isAdmin: !!user.is_admin, isSuperAdmin: !!user.is_super_admin });
 });
 
 app.get('/api/auth/me', requireAuth, (req, res) => {
   const user = getUserById(req.user.sub);
-  res.json({ username: user.username, email: user.email, isAdmin: !!user.is_admin });
+  res.json({ username: user.username, email: user.email, isAdmin: !!user.is_admin, isSuperAdmin: !!user.is_super_admin });
 });
 
 app.post('/api/auth/change-password', requireAuth, (req, res) => {
@@ -153,8 +148,7 @@ app.get('/api/my-events', requireAuth, (req, res) => {
   if (req.user.isAdmin) {
     return res.json(listEvents().map((e) => ({ ...e, myRole: 'admin' })));
   }
-  const rows = listEventsForUser(req.user.sub).map((e) => ({ ...e, myRole: e.role }));
-  res.json(rows);
+  res.json(listEventsForUser(req.user.sub).map((e) => ({ ...e, myRole: e.role })));
 });
 
 // ================= events (admin only) =================
@@ -182,7 +176,6 @@ app.post('/api/reset', requireAdmin, requireAdminKey, (req, res) => {
 app.post('/api/students', requireEventRole('employee'), async (req, res) => {
   const { name, id: studentId, email } = req.body || {};
   if (!name || !String(name).trim()) return res.status(400).json({ error: 'name is required' });
-
   const token = genToken();
   const now = Date.now();
   db.prepare(
@@ -190,8 +183,7 @@ app.post('/api/students', requireEventRole('employee'), async (req, res) => {
      VALUES (?, ?, ?, ?, ?, 'unused', ?, 0)`
   ).run(token, req.eventId, name.trim(), studentId || '', email || '', now);
 
-  let mailStatus = 'skipped';
-  let mailError = null;
+  let mailStatus = 'skipped', mailError = null;
   if (email) {
     try {
       await sendPassEmail({ to: email, name, studentId, token, eventName: req.event.name });
@@ -218,7 +210,6 @@ app.post('/api/students/bulk', requireEventRole('employee'), async (req, res) =>
       `INSERT INTO students (token, event_id, name, student_id, email, status, created_at, mail_sent)
        VALUES (?, ?, ?, ?, ?, 'unused', ?, 0)`
     ).run(token, req.eventId, name, row.id || '', row.email || '', now);
-
     let mailStatus = 'skipped';
     if (row.email) {
       try {
@@ -254,8 +245,7 @@ app.post('/api/students/:token/resend', requireAuth, async (req, res) => {
 });
 
 app.get('/api/students', requireEventRole('employee'), (req, res) => {
-  const rows = db.prepare('SELECT * FROM students WHERE event_id = ? ORDER BY created_at DESC').all(req.eventId);
-  res.json(rows);
+  res.json(db.prepare('SELECT * FROM students WHERE event_id = ? ORDER BY created_at DESC').all(req.eventId));
 });
 app.get('/api/stats', requireEventRole('employee'), (req, res) => {
   const total = db.prepare('SELECT COUNT(*) c FROM students WHERE event_id = ?').get(req.eventId).c;
@@ -284,40 +274,68 @@ app.post('/api/verify', requireAuth, (req, res) => {
   if (!userHasEventAccess(req.user, rec.event_id, 'scanner')) {
     return res.status(403).json({ error: 'You do not have scanner access to this event' });
   }
-  const outcome = verifyTxn(token);
-  res.json(outcome);
+  res.json(verifyTxn(token));
 });
 
-// ================= Team Details (central directory, admin only) =================
-app.get('/api/team', requireAdmin, (req, res) => {
+// ================= Team Details (central directory) =================
+// Reading the directory is open to any logged-in user (needed to populate
+// the "add to this event" picker for employees). Managing it is admin-only.
+app.get('/api/team', requireAuth, (req, res) => {
   res.json(listAllUsers());
 });
+
 app.post('/api/team', requireAdmin, (req, res) => {
   const email = String(req.body?.email || '').trim().toLowerCase();
   const username = String(req.body?.username || '').trim() || email.split('@')[0];
+  const password = req.body?.password ? String(req.body.password) : null;
+  const role = req.body?.role === 'admin' ? 'admin' : 'member';
   if (!email || !email.includes('@')) return res.status(400).json({ error: 'A valid email is required' });
-  const user = adminAddPendingUser(email, username);
+  if (password && password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (role === 'admin' && !checkAdminKey(req.body?.adminKey)) {
+    return res.status(403).json({ error: 'Incorrect admin secret key - required to grant admin at creation' });
+  }
+  const user = adminAddUser({ email, username, password, isAdmin: role === 'admin' });
   if (!user) return res.status(409).json({ error: 'That email is already in the directory' });
   res.json(user);
 });
+
 app.patch('/api/team/:id', requireAdmin, (req, res) => {
   const target = getUserById(req.params.id);
   if (!target) return res.status(404).json({ error: 'user not found' });
   const { isAdmin, adminKey } = req.body || {};
-  if (isAdmin !== undefined) {
+
+  if (isAdmin === true) {
+    // Promotion: open to any admin, with the secret key.
     if (!checkAdminKey(adminKey)) return res.status(403).json({ error: 'Incorrect admin secret key' });
-    if (target.is_admin && !isAdmin && countAdmins() <= 1) {
+    setUserAdmin(target.id, true);
+  } else if (isAdmin === false) {
+    // Demotion: only the main admin can ever remove someone from admin,
+    // and the main admin themselves can never be demoted by anyone.
+    if (target.is_super_admin) {
+      return res.status(403).json({ error: 'The main admin account can never be removed from admin.' });
+    }
+    if (!req.user.isSuperAdmin) {
+      return res.status(403).json({ error: 'Only the main admin can remove someone from the admin role.' });
+    }
+    if (!checkAdminKey(adminKey)) return res.status(403).json({ error: 'Incorrect admin secret key' });
+    if (target.is_admin && countAdmins() <= 1) {
       return res.status(400).json({ error: 'Cannot demote the last remaining admin' });
     }
-    setUserAdmin(target.id, isAdmin);
+    setUserAdmin(target.id, false);
   }
   res.json(getUserById(target.id));
 });
+
 app.delete('/api/team/:id', requireAdmin, (req, res) => {
   const target = getUserById(req.params.id);
   if (!target) return res.status(404).json({ error: 'user not found' });
+  if (target.is_super_admin) {
+    return res.status(403).json({ error: 'The main admin account can never be removed.' });
+  }
+  if (target.is_admin && !req.user.isSuperAdmin) {
+    return res.status(403).json({ error: 'Only the main admin can remove an admin account.' });
+  }
   if (target.id === req.user.sub) return res.status(400).json({ error: 'You cannot remove your own account' });
-  if (target.is_admin && countAdmins() <= 1) return res.status(400).json({ error: 'Cannot remove the last remaining admin' });
   deleteUser(target.id);
   res.json({ ok: true });
 });
@@ -337,20 +355,33 @@ app.post('/api/admin-key', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// ================= per-event member management (admin only) =================
-app.get('/api/events/:id/members', requireAdmin, (req, res) => {
-  const event = getEvent(req.params.id);
-  if (!event) return res.status(404).json({ error: 'event not found' });
-  res.json(listEventMembers(event.id));
+// ================= per-event member management =================
+// Viewing and ADDING members is open to admins and to employees of that
+// specific event (so employees can build their own event team). Changing
+// an existing member's role or removing them stays admin-only.
+// These routes take the event id from the URL itself, not x-event-id.
+function requireEventRoleByParam(minRole) {
+  return (req, res, next) => {
+    requireAuth(req, res, () => {
+      const event = getEvent(req.params.id);
+      if (!event) return res.status(404).json({ error: 'event not found' });
+      if (!userHasEventAccess(req.user, event.id, minRole)) {
+        return res.status(403).json({ error: 'You do not have access to this event' });
+      }
+      req.event = event;
+      next();
+    });
+  };
+}
+app.get('/api/events/:id/members', requireEventRoleByParam('employee'), (req, res) => {
+  res.json(listEventMembers(req.event.id));
 });
-app.post('/api/events/:id/members', requireAdmin, (req, res) => {
-  const event = getEvent(req.params.id);
-  if (!event) return res.status(404).json({ error: 'event not found' });
+app.post('/api/events/:id/members', requireEventRoleByParam('employee'), (req, res) => {
   const { userId, role } = req.body || {};
   if (!['employee', 'scanner'].includes(role)) return res.status(400).json({ error: 'role must be employee or scanner' });
   const user = getUserById(userId);
   if (!user) return res.status(404).json({ error: 'That person is not in Team Details yet - add them there first' });
-  addOrUpdateEventMember(event.id, userId, role);
+  addOrUpdateEventMember(req.event.id, userId, role);
   res.json({ ok: true });
 });
 app.patch('/api/events/:id/members/:userId', requireAdmin, (req, res) => {
@@ -370,8 +401,6 @@ app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Gatekeep server running on http://localhost:${PORT}`);
-  });
+  app.listen(PORT, () => console.log(`Gatekeep server running on http://localhost:${PORT}`));
 }
 module.exports = app;

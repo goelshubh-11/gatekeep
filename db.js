@@ -33,7 +33,6 @@ CREATE TABLE IF NOT EXISTS settings (
 );
 `);
 
-// ---- Migration: older DBs (pre-events) missing event_id on students ----
 const studentCols = db.prepare("PRAGMA table_info(students)").all().map((c) => c.name);
 if (!studentCols.includes('event_id')) {
   db.exec("ALTER TABLE students ADD COLUMN event_id TEXT NOT NULL DEFAULT 'default'");
@@ -50,42 +49,31 @@ function setSetting(key, value) {
 }
 
 // ---- users table: rebuilt to the final shape if an older version exists ----
-// Old shape: (id, username UNIQUE NOT NULL, password_hash, role, created_at)
-// New shape adds: email (unique, nullable), is_admin, verified, otp_code,
-// otp_expires_at - and drops the UNIQUE constraint on username, since two
-// real people can share a display name (email is the real identifier now).
 const userCols = db.prepare("PRAGMA table_info(users)").all().map((c) => c.name);
 const usersTableExists = userCols.length > 0;
 const needsUserRebuild = usersTableExists && !userCols.includes('is_admin');
 
+const USERS_CREATE_SQL = `
+  CREATE TABLE users (
+    id TEXT PRIMARY KEY,
+    username TEXT NOT NULL,
+    email TEXT,
+    password_hash TEXT,
+    is_admin INTEGER NOT NULL DEFAULT 0,
+    is_super_admin INTEGER NOT NULL DEFAULT 0,
+    verified INTEGER NOT NULL DEFAULT 0,
+    otp_code TEXT,
+    otp_expires_at INTEGER,
+    created_at INTEGER NOT NULL
+  );
+`;
+
 if (!usersTableExists) {
-  db.exec(`
-    CREATE TABLE users (
-      id TEXT PRIMARY KEY,
-      username TEXT NOT NULL,
-      email TEXT,
-      password_hash TEXT,
-      is_admin INTEGER NOT NULL DEFAULT 0,
-      verified INTEGER NOT NULL DEFAULT 0,
-      otp_code TEXT,
-      otp_expires_at INTEGER,
-      created_at INTEGER NOT NULL
-    );
-  `);
+  db.exec(USERS_CREATE_SQL);
 } else if (needsUserRebuild) {
   db.exec(`
     ALTER TABLE users RENAME TO users_old;
-    CREATE TABLE users (
-      id TEXT PRIMARY KEY,
-      username TEXT NOT NULL,
-      email TEXT,
-      password_hash TEXT,
-      is_admin INTEGER NOT NULL DEFAULT 0,
-      verified INTEGER NOT NULL DEFAULT 0,
-      otp_code TEXT,
-      otp_expires_at INTEGER,
-      created_at INTEGER NOT NULL
-    );
+    ${USERS_CREATE_SQL}
     INSERT INTO users (id, username, password_hash, is_admin, verified, created_at)
       SELECT id, username, password_hash, CASE WHEN role='admin' THEN 1 ELSE 0 END, 1, created_at
       FROM users_old;
@@ -93,7 +81,27 @@ if (!usersTableExists) {
   `);
   console.log('Migrated users table to the new account/role schema. Existing accounts kept their passwords and admin status, but have no email on file yet and are not assigned to any specific event - use Team Details to add their email and assign them to events again.');
 }
+
+// Add is_super_admin to installs that already had the post-migration schema
+// but predate the super-admin concept.
+const userColsNow = db.prepare("PRAGMA table_info(users)").all().map((c) => c.name);
+if (!userColsNow.includes('is_super_admin')) {
+  db.exec('ALTER TABLE users ADD COLUMN is_super_admin INTEGER NOT NULL DEFAULT 0');
+}
 db.exec('CREATE UNIQUE INDEX IF NOT EXISTS ux_users_email ON users(email)');
+
+// Guarantee exactly one main admin always exists once any admin exists at
+// all - this is what makes the "nobody can remove the main admin" rule
+// deadlock-proof: pick one deterministically if none is flagged yet.
+const superAdminCount = db.prepare('SELECT COUNT(*) c FROM users WHERE is_super_admin = 1').get().c;
+if (superAdminCount === 0) {
+  const byUsername = db.prepare("SELECT id FROM users WHERE is_admin = 1 AND username = 'admin'").get();
+  const earliestAdmin = db.prepare('SELECT id FROM users WHERE is_admin = 1 ORDER BY created_at ASC LIMIT 1').get();
+  const pick = byUsername || earliestAdmin;
+  if (pick) {
+    db.prepare('UPDATE users SET is_super_admin = 1 WHERE id = ?').run(pick.id);
+  }
+}
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS event_members (
@@ -104,7 +112,6 @@ CREATE TABLE IF NOT EXISTS event_members (
 );
 `);
 
-// ---- ensure at least one event exists ----
 const eventCount = db.prepare('SELECT COUNT(*) c FROM events').get().c;
 if (eventCount === 0) {
   const legacyName = getSetting('eventName', null);
@@ -112,7 +119,7 @@ if (eventCount === 0) {
   db.prepare('INSERT INTO events (id, name, created_at) VALUES (?, ?, ?)').run('default', defaultName, Date.now());
 }
 
-// ---- bootstrap the first admin account from env vars, if no users exist yet ----
+// ---- bootstrap the first (main) admin account from env vars ----
 const userCount = db.prepare('SELECT COUNT(*) c FROM users').get().c;
 if (userCount === 0) {
   const bootUser = process.env.ADMIN_USERNAME;
@@ -121,9 +128,9 @@ if (userCount === 0) {
   if (bootUser && bootPass) {
     const hash = bcrypt.hashSync(bootPass, 10);
     db.prepare(
-      'INSERT INTO users (id, username, email, password_hash, is_admin, verified, created_at) VALUES (?, ?, ?, ?, 1, 1, ?)'
+      'INSERT INTO users (id, username, email, password_hash, is_admin, is_super_admin, verified, created_at) VALUES (?, ?, ?, ?, 1, 1, 1, ?)'
     ).run(crypto.randomBytes(8).toString('hex'), bootUser, bootEmail, hash, Date.now());
-    console.log(`Created initial admin account "${bootUser}"${bootEmail ? ' (' + bootEmail + ')' : ''} from ADMIN_USERNAME/ADMIN_PASSWORD.`);
+    console.log(`Created the main admin account "${bootUser}"${bootEmail ? ' (' + bootEmail + ')' : ''} from ADMIN_USERNAME/ADMIN_PASSWORD. This account can never be demoted or removed by anyone.`);
   } else {
     console.warn('No users exist yet and ADMIN_USERNAME/ADMIN_PASSWORD are not set in .env - nobody can log in until you set them and restart.');
   }
@@ -138,9 +145,7 @@ function listEvents() {
     return { ...e, total, used, pending: total - used };
   });
 }
-function getEvent(id) {
-  return db.prepare('SELECT * FROM events WHERE id = ?').get(id);
-}
+function getEvent(id) { return db.prepare('SELECT * FROM events WHERE id = ?').get(id); }
 function createEvent(name) {
   const id = crypto.randomBytes(6).toString('hex');
   db.prepare('INSERT INTO events (id, name, created_at) VALUES (?, ?, ?)').run(id, name, Date.now());
@@ -152,7 +157,7 @@ function renameEvent(id, name) {
 }
 
 // ================= users / accounts =================
-const SAFE_USER_COLS = 'id, username, email, is_admin, verified, created_at';
+const SAFE_USER_COLS = 'id, username, email, is_admin, is_super_admin, verified, created_at';
 
 function listAllUsers() {
   return db.prepare(`SELECT ${SAFE_USER_COLS} FROM users ORDER BY created_at ASC`).all();
@@ -170,14 +175,24 @@ function countAdmins() {
   return db.prepare('SELECT COUNT(*) c FROM users WHERE is_admin = 1').get().c;
 }
 
-// Admin pre-provisions someone by email, no verification triggered.
-function adminAddPendingUser(email, username) {
+// Admin adds someone to the directory. If a password is given, the account
+// is immediately usable (no signup/OTP needed). If not, it's a placeholder
+// that gets "claimed" (see startSignup) when that person signs up themselves.
+function adminAddUser({ email, username, password, isAdmin }) {
   const existing = getUserByEmailFull(email);
-  if (existing) return null; // already in the directory
+  if (existing) return null;
   const id = crypto.randomBytes(8).toString('hex');
-  db.prepare(
-    'INSERT INTO users (id, username, email, is_admin, verified, created_at) VALUES (?, ?, ?, 0, 0, ?)'
-  ).run(id, username || email.split('@')[0], email, Date.now());
+  const hasPassword = !!password;
+  db.prepare(`
+    INSERT INTO users (id, username, email, password_hash, is_admin, verified, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    id, username || email.split('@')[0], email,
+    hasPassword ? bcrypt.hashSync(password, 10) : null,
+    isAdmin ? 1 : 0,
+    hasPassword ? 1 : 0,
+    Date.now()
+  );
   return getUserById(id);
 }
 
@@ -185,14 +200,9 @@ function genOtp() {
   return String(crypto.randomInt(100000, 999999));
 }
 
-// Self-signup: creates a new row, or "claims" a row the admin already
-// pre-provisioned by email (keeping any event assignments already made).
-// Returns { user, otp } or null if that email already has a completed account.
 function startSignup(email, username) {
   const existing = getUserByEmailFull(email);
-  if (existing && existing.password_hash && existing.verified) {
-    return null; // fully-registered account already exists
-  }
+  if (existing && existing.password_hash && existing.verified) return null;
   const otp = genOtp();
   const expires = Date.now() + 10 * 60 * 1000;
   if (existing) {
@@ -266,8 +276,7 @@ function listEventsForUser(userId) {
   });
 }
 
-// Cumulative access check: admin > employee > scanner.
-// minRole 'scanner' is satisfied by scanner or employee; 'employee' only by employee.
+// Cumulative: admin (incl. de-facto for every event) > employee > scanner.
 function userHasEventAccess(user, eventId, minRole) {
   if (user.isAdmin) return true;
   const role = getEventMemberRole(eventId, user.sub);
@@ -277,20 +286,16 @@ function userHasEventAccess(user, eventId, minRole) {
   return false;
 }
 
-// ================= admin secret key (for rename / clear / promote) =================
-function getAdminKeyHash() {
-  return getSetting('admin_action_key_hash', null);
-}
-function setAdminKeyHash(hash) {
-  setSetting('admin_action_key_hash', hash);
-}
+// ================= admin secret key =================
+function getAdminKeyHash() { return getSetting('admin_action_key_hash', null); }
+function setAdminKeyHash(hash) { setSetting('admin_action_key_hash', hash); }
 function checkAdminKey(plain) {
   const hash = getAdminKeyHash();
   if (!hash) return false;
   return bcrypt.compareSync(String(plain || ''), hash);
 }
 
-// ================= scan dedupe (unchanged) =================
+// ================= scan dedupe =================
 const verifyTxn = db.transaction((token) => {
   const rec = db.prepare('SELECT * FROM students WHERE token = ?').get(token);
   if (!rec) return { result: 'invalid' };
@@ -306,7 +311,7 @@ module.exports = {
   db, getSetting, setSetting, verifyTxn,
   listEvents, getEvent, createEvent, renameEvent,
   listAllUsers, getUserById, getUserByEmailFull, getUserByUsernameFull, countAdmins,
-  adminAddPendingUser, startSignup, verifyOtp, setPassword, updateUserPassword,
+  adminAddUser, startSignup, verifyOtp, setPassword, updateUserPassword,
   setUserAdmin, deleteUser,
   listEventMembers, getEventMemberRole, addOrUpdateEventMember, removeEventMember,
   listEventsForUser, userHasEventAccess,

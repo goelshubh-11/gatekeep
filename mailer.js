@@ -42,7 +42,7 @@ async function sendPassEmail({ to, name, studentId, token, eventName }) {
                 </tr>
                 <tr>
                   <td align="center" style="padding:20px 10px;">
-                    <img src="cid:${attachmentName}" width="260" height="260" alt="Entry QR code" style="display:block;border:10px solid #FFFFFF;background:#FFFFFF;" />
+                    <img src="data:image/png;base64,${qrBase64}" width="260" height="260" alt="Entry QR code" style="display:block;border:10px solid #FFFFFF;background:#FFFFFF;" />
                   </td>
                 </tr>
                 <tr>

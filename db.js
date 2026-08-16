@@ -159,8 +159,17 @@ function renameEvent(id, name) {
 // ================= users / accounts =================
 const SAFE_USER_COLS = 'id, username, email, is_admin, is_super_admin, verified, created_at';
 
+// Only surfaces accounts that are actually ready to use: either an admin
+// pre-added them with a password already set, or they self-signed-up,
+// verified their email via OTP, AND finished setting a password. A
+// self-signup that's mid-flow (email not yet verified, or verified but no
+// password chosen yet) — and an admin-added placeholder still waiting to be
+// claimed — should not show up in the team directory / central team list
+// until that's actually complete.
 function listAllUsers() {
-  return db.prepare(`SELECT ${SAFE_USER_COLS} FROM users ORDER BY created_at ASC`).all();
+  return db.prepare(
+    `SELECT ${SAFE_USER_COLS} FROM users WHERE verified = 1 AND password_hash IS NOT NULL ORDER BY created_at ASC`
+  ).all();
 }
 function getUserById(id) {
   return db.prepare(`SELECT ${SAFE_USER_COLS} FROM users WHERE id = ?`).get(id);

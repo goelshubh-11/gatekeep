@@ -244,6 +244,19 @@ app.post('/api/students/:token/resend', requireAuth, async (req, res) => {
   }
 });
 
+// Delete a single roster entry — same admin + secret-key protection as
+// "Clear this event's data" (POST /api/reset above), just scoped to one row
+// instead of the whole event.
+app.delete('/api/students/:token', requireAdmin, requireAdminKey, (req, res) => {
+  const eventId = req.header('x-event-id') || req.query.eventId || '';
+  const event = eventId && getEvent(eventId);
+  if (!event) return res.status(400).json({ error: 'Unknown or missing event' });
+  const rec = db.prepare('SELECT * FROM students WHERE token = ? AND event_id = ?').get(req.params.token, event.id);
+  if (!rec) return res.status(404).json({ error: 'Roster entry not found in this event' });
+  db.prepare('DELETE FROM students WHERE token = ? AND event_id = ?').run(req.params.token, event.id);
+  res.json({ ok: true });
+});
+
 app.get('/api/students', requireEventRole('employee'), (req, res) => {
   res.json(db.prepare('SELECT * FROM students WHERE event_id = ? ORDER BY created_at DESC').all(req.eventId));
 });

@@ -155,6 +155,11 @@ function renameEvent(id, name) {
   db.prepare('UPDATE events SET name = ? WHERE id = ?').run(name, id);
   return getEvent(id);
 }
+function deleteEventCascade(id) {
+  db.prepare('DELETE FROM students WHERE event_id = ?').run(id);
+  db.prepare('DELETE FROM event_members WHERE event_id = ?').run(id);
+  db.prepare('DELETE FROM events WHERE id = ?').run(id);
+}
 
 // ================= users / accounts =================
 const SAFE_USER_COLS = 'id, username, email, is_admin, is_super_admin, verified, created_at';

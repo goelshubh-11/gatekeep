@@ -4,7 +4,7 @@ const cors = require('cors');
 const crypto = require('crypto');
 const path = require('path');
 const {
-  db, listEvents, getEvent, createEvent, renameEvent,
+  ddb, listEvents, getEvent, createEvent, renameEvent, deleteEventCascade,
   listAllUsers, getUserById, getUserByEmailFull, getUserByUsernameFull, countAdmins,
   adminAddUser, startSignup, verifyOtp, setPassword, updateUserPassword,
   setUserAdmin, deleteUser,
@@ -189,6 +189,12 @@ app.patch('/api/events/:id', requireAdmin, requireAdminKey, (req, res) => {
   const name = (req.body?.name || '').trim();
   if (!name) return res.status(400).json({ error: 'name is required' });
   res.json(renameEvent(event.id, name));
+});
+app.delete('/api/events/:id', requireAdmin, requireAdminKey, (req, res) => {
+  const event = getEvent(req.params.id);
+  if (!event) return res.status(404).json({ error: 'event not found' });
+  deleteEventCascade(event.id);
+  res.json({ ok: true });
 });
 app.post('/api/reset', requireAdmin, requireAdminKey, (req, res) => {
   const eventId = req.header('x-event-id') || req.query.eventId || '';

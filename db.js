@@ -331,7 +331,7 @@ const verifyTxn = db.transaction((token, eventId) => {
 
 module.exports = {
   db, getSetting, setSetting, verifyTxn,
-  listEvents, getEvent, createEvent, renameEvent,
+  listEvents, getEvent, createEvent, renameEvent, deleteEventCascade,
   listAllUsers, getUserById, getUserByEmailFull, getUserByUsernameFull, countAdmins,
   adminAddUser, startSignup, verifyOtp, setPassword, updateUserPassword,
   setUserAdmin, deleteUser,

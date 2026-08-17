@@ -1,0 +1,253 @@
+From 57d0d46b6bb8ea3fc9f79d1ddc0868bb83f934b7 Mon Sep 17 00:00:00 2001
+From: Claude <claude@anthropic.com>
+Date: Sun, 16 Aug 2026 16:14:09 +0000
+Subject: [PATCH] Fix QR email inline image, scan timing/vibration,
+ team-directory gating, add per-entry roster delete, mobile responsive fixes
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- mailer.js: replace broken cid: inline image reference (unsupported by
+  Brevo's transactional API) with a base64 data URI so the QR actually
+  renders inline in the email instead of showing a broken image icon.
+- index.html: fix scan-result timing — the 3s pause-before-resume was
+  starting synchronously the instant a QR was detected, racing the async
+  verifyToken() call, so it fired before the result even rendered. Now the
+  countdown only starts once the result panel has actually painted. Also
+  prime vibrate() permission on the camera-start button's direct user tap,
+  since some Android browsers silently drop vibrate() calls not tied to a
+  direct gesture.
+- db.js: listAllUsers() (team directory) now only returns accounts that are
+  actually usable — either admin-added with a password already set, or
+  fully self-signed-up (OTP verified AND password chosen). Mid-flow signups
+  and unclaimed admin placeholders no longer show in the Team list.
+- server.js: add DELETE /api/students/:token for removing a single roster
+  entry, protected by the same admin + secret-key check as the existing
+  'clear this event's data' route.
+- index.html: add a per-row Delete button on the Roster tab (admin-only,
+  same confirm + secret-key flow as Clear Event Data); make Roster/Team/
+  Members tables horizontally scrollable on narrow screens; fix .auth-box
+  overflow on narrow phones; add a mobile media query for header stacking,
+  scrollable tab bar, and tighter spacing.
+---
+ db.js             | 11 ++++++-
+ mailer.js         |  2 +-
+ public/index.html | 74 ++++++++++++++++++++++++++++++++++++++++++-----
+ server.js         | 13 +++++++++
+ 4 files changed, 91 insertions(+), 9 deletions(-)
+
+diff --git a/db.js b/db.js
+index a6aa600..0be9ccb 100644
+--- a/db.js
++++ b/db.js
+@@ -159,8 +159,17 @@ function renameEvent(id, name) {
+ // ================= users / accounts =================
+ const SAFE_USER_COLS = 'id, username, email, is_admin, is_super_admin, verified, created_at';
+ 
++// Only surfaces accounts that are actually ready to use: either an admin
++// pre-added them with a password already set, or they self-signed-up,
++// verified their email via OTP, AND finished setting a password. A
++// self-signup that's mid-flow (email not yet verified, or verified but no
++// password chosen yet) — and an admin-added placeholder still waiting to be
++// claimed — should not show up in the team directory / central team list
++// until that's actually complete.
+ function listAllUsers() {
+-  return db.prepare(`SELECT ${SAFE_USER_COLS} FROM users ORDER BY created_at ASC`).all();
++  return db.prepare(
++    `SELECT ${SAFE_USER_COLS} FROM users WHERE verified = 1 AND password_hash IS NOT NULL ORDER BY created_at ASC`
++  ).all();
+ }
+ function getUserById(id) {
+   return db.prepare(`SELECT ${SAFE_USER_COLS} FROM users WHERE id = ?`).get(id);
+diff --git a/mailer.js b/mailer.js
+index 8a34510..9fc59b0 100644
+--- a/mailer.js
++++ b/mailer.js
+@@ -42,7 +42,7 @@ async function sendPassEmail({ to, name, studentId, token, eventName }) {
+                 </tr>
+                 <tr>
+                   <td align="center" style="padding:20px 10px;">
+-                    <img src="cid:${attachmentName}" width="260" height="260" alt="Entry QR code" style="display:block;border:10px solid #FFFFFF;background:#FFFFFF;" />
++                    <img src="data:image/png;base64,${qrBase64}" width="260" height="260" alt="Entry QR code" style="display:block;border:10px solid #FFFFFF;background:#FFFFFF;" />
+                   </td>
+                 </tr>
+                 <tr>
+diff --git a/public/index.html b/public/index.html
+index 777da7f..9175171 100644
+--- a/public/index.html
++++ b/public/index.html
+@@ -98,7 +98,8 @@
+   .btn-danger{background:var(--red-dim);color:var(--red);border:1px solid #6b2c39;}
+   .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
+   button.btn:disabled{opacity:.5;cursor:not-allowed;}
+-  table{width:100%;border-collapse:collapse;font-size:13px;}
++  #teamTableWrap,#rosterTableWrap,#membersTableWrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
++  table{width:100%;min-width:560px;border-collapse:collapse;font-size:13px;}
+   th{text-align:left;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.4px;
+     padding:8px 10px;border-bottom:1px solid var(--line);}
+   td{padding:10px 10px;border-bottom:1px solid #2a2350;vertical-align:middle;}
+@@ -148,7 +149,7 @@
+   .kv .val{font-family:'JetBrains Mono',monospace;font-size:12px;word-break:break-all;text-align:right;}
+   .copy-row{display:flex;align-items:center;gap:8px;}
+   .center-screen{min-height:80vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+-  .auth-box{width:360px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:28px;}
++  .auth-box{width:360px;max-width:100%;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:28px;}
+   .auth-box .brand-mark{margin:0 auto 14px;width:44px;height:44px;font-size:18px;}
+   .auth-box h3{font-family:'Space Grotesk',sans-serif;margin:0 0 4px;text-align:center;}
+   .auth-box p{color:var(--muted);font-size:13px;margin:0 0 18px;text-align:center;}
+@@ -176,6 +177,29 @@
+     font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;margin-bottom:16px;}
+   .back-link:hover{color:var(--paper);}
+   .otp-boxes{display:flex;gap:8px;justify-content:center;margin-bottom:16px;}
++
++  /* ================= MOBILE ================= */
++  @media(max-width:560px){
++    .shell{padding:14px 12px 48px;}
++    header.top{flex-direction:column;align-items:stretch;gap:12px;padding:4px 0 16px;}
++    .brand{justify-content:center;}
++    .header-right{justify-content:center;width:100%;}
++    .whoami{justify-content:center;flex:1;}
++    nav.tabs{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;justify-content:flex-start;
++      scrollbar-width:none;}
++    nav.tabs::-webkit-scrollbar{display:none;}
++    nav.tabs button{flex:0 0 auto;white-space:nowrap;padding:8px 12px;font-size:12.5px;}
++    .panel{padding:16px;margin-bottom:14px;}
++    .stats{grid-template-columns:1fr 1fr;gap:8px;}
++    .stat{padding:12px 14px;}
++    .stat .num{font-size:22px;}
++    .btn-row{flex-direction:column;align-items:stretch;}
++    .btn-row .btn{width:100%;}
++    .manual-row{flex-direction:column;}
++    .event-grid{grid-template-columns:1fr;}
++    .otp-boxes{gap:6px;}
++    .auth-box,.modal-box{padding:20px;}
++  }
+ </style>
+ </head>
+ <body>
+@@ -871,7 +895,10 @@ async function loadRoster(){
+       <td>${r.status==='used' ? `<span class="pill pill-used">Checked in</span>` : `<span class="pill pill-unused">Not arrived</span>`}</td>
+       <td>${r.mail_sent ? `<span class="pill pill-used">Emailed</span>` : r.mail_error ? `<span class="pill pill-fail">Failed</span>` : `<span class="pill pill-unused">No email</span>`}</td>
+       <td class="tok">${r.used_at ? new Date(r.used_at).toLocaleTimeString() : '—'}</td>
+-      <td>${r.email ? `<button class="icon-btn" data-resend="${r.token}">Resend</button>` : ''}</td>
++      <td>
++        ${r.email ? `<button class="icon-btn" data-resend="${r.token}">Resend</button>` : ''}
++        ${IS_ADMIN ? `<button class="icon-btn" data-delete-entry="${r.token}" data-name="${escapeHtml(r.name)}">Delete</button>` : ''}
++      </td>
+     </tr>`).join('');
+   wrap.innerHTML = `<table><thead><tr><th>Name</th><th>ID</th><th>Email</th><th>Pass code</th><th>Status</th><th>Email</th><th>Checked in</th><th></th></tr></thead><tbody>${body}</tbody></table>`;
+   wrap.querySelectorAll('[data-resend]').forEach(b=>b.addEventListener('click', async ()=>{
+@@ -879,6 +906,18 @@ async function loadRoster(){
+     try{ await api(`/api/students/${b.dataset.resend}/resend`, {method:'POST'}, true); showToast('Email resent'); loadRoster(); }
+     catch(e){ showToast('Resend failed: '+e.message); b.disabled=false; b.textContent='Resend'; }
+   }));
++  // Deleting a single roster entry uses the exact same admin + secret-key
++  // protection as "Clear this event's data" — just scoped to one row.
++  wrap.querySelectorAll('[data-delete-entry]').forEach(b=>b.addEventListener('click', async ()=>{
++    const token = b.dataset.deleteEntry, name = b.dataset.name;
++    if(!confirm(`Permanently remove "${name}" from this event's roster? This can't be undone.`)) return;
++    const key = await askForAdminKey('Delete roster entry', `Removing "${name}" requires the admin secret key.`);
++    if(key===null) return;
++    try{
++      await api(`/api/students/${token}`, {method:'DELETE', body: JSON.stringify({adminKey:key})}, true);
++      showToast('Entry removed'); loadRoster(); refreshStats();
++    }catch(e){ showToast('Error: '+e.message); }
++  }));
+ }
+ document.getElementById('refreshRosterBtn').addEventListener('click', loadRoster);
+ document.getElementById('exportCsvBtn').addEventListener('click', async ()=>{
+@@ -1014,6 +1053,11 @@ async function startCameraWithDeviceId(deviceId){
+ }
+ document.getElementById('camToggleBtn').addEventListener('click', async ()=>{
+   unlockAudio();
++  // Prime vibration permission on this real user tap — many Android browsers
++  // silently ignore navigator.vibrate() calls that aren't traced back to a
++  // direct user gesture, and our actual vibrate() calls happen later inside
++  // an async scan/verify flow, which some browsers don't count as "direct".
++  if(navigator.vibrate){ try{ navigator.vibrate(1); }catch(e){} }
+   if(scanning){ stopCamera(); return; }
+   setDiag('');
+   if(typeof jsQR !== 'function'){ setDiag('The QR decoder failed to load. Try refreshing the page.'); return; }
+@@ -1043,10 +1087,20 @@ function stopCamera(){
+   const btn = document.getElementById('camToggleBtn'); if(btn) btn.textContent = 'Start camera';
+ }
+ if(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices){ populateCamList(); }
+-function pauseAfterScan(){
++// Stop the camera decode loop the instant a code is detected, so we don't
++// burn frames re-decoding the same QR while the (async) verify call is in
++// flight. This does NOT start the 3s "read the result" countdown — that
++// only starts once the result has actually rendered on screen, see
++// resumeCountdownAfterResult() below.
++function haltScanningForVerify(){
+   camPaused = true;
++  clearTimeout(resumeTimer);
++}
++// Called once verifyToken has finished and the result panel is showing.
++// This is what actually starts the 3-second "let staff read it" window.
++function resumeCountdownAfterResult(){
+   document.getElementById('scanNextWrap').style.display = 'block';
+-  clearTimeout(resumeTimer); resumeTimer = setTimeout(resumeScanning, 2200);
++  clearTimeout(resumeTimer); resumeTimer = setTimeout(resumeScanning, 3000);
+ }
+ function resumeScanning(){ camPaused = false; document.getElementById('scanNextWrap').style.display = 'none'; clearTimeout(resumeTimer); }
+ document.getElementById('scanNextBtn').addEventListener('click', resumeScanning);
+@@ -1060,7 +1114,7 @@ function scanLoop(){
+       ctx2d.drawImage(video,0,0,canvas.width,canvas.height);
+       const imgData = ctx2d.getImageData(0,0,canvas.width,canvas.height);
+       const code = jsQR(imgData.data, imgData.width, imgData.height);
+-      if(code && code.data){ verifyToken(code.data.trim()); pauseAfterScan(); }
++      if(code && code.data){ haltScanningForVerify(); verifyToken(code.data.trim(), true); }
+     }
+   }catch(err){ console.error('scanLoop error', err); showToast('Scanner error: '+err.message); stopCamera(); return; }
+   requestAnimationFrame(scanLoop);
+@@ -1073,7 +1127,7 @@ document.getElementById('manualVerifyBtn').addEventListener('click', ()=>{
+ document.getElementById('manualToken').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('manualVerifyBtn').click(); });
+ function vibrate(pattern){ if(navigator.vibrate){ try{ navigator.vibrate(pattern); }catch(e){} } }
+ 
+-async function verifyToken(token){
++async function verifyToken(token, fromCamera){
+   const panel = document.getElementById('resultPanel');
+   const title = document.getElementById('resultTitle');
+   const sub = document.getElementById('resultSub');
+@@ -1096,8 +1150,14 @@ async function verifyToken(token){
+       meta.textContent=`Pass ${r.record.token}`;
+       vibrate(70); beep(880, 0.15);
+     }
++    // Only now, with the result actually painted, start the 3s hold before
++    // the camera resumes decoding — this is what fixes the "not well timed"
++    // scan, which previously started its countdown before this result even
++    // rendered (verifyToken is async; the old code raced it).
++    if(fromCamera) resumeCountdownAfterResult();
+   }catch(e){
+     panel.className='result-panel state-invalid'; title.textContent='Error'; sub.textContent=e.message;
++    if(fromCamera) resumeCountdownAfterResult();
+   }
+   document.getElementById('manualToken').value='';
+ }
+diff --git a/server.js b/server.js
+index 759f6b1..9545eff 100644
+--- a/server.js
++++ b/server.js
+@@ -244,6 +244,19 @@ app.post('/api/students/:token/resend', requireAuth, async (req, res) => {
+   }
+ });
+ 
++// Delete a single roster entry — same admin + secret-key protection as
++// "Clear this event's data" (POST /api/reset above), just scoped to one row
++// instead of the whole event.
++app.delete('/api/students/:token', requireAdmin, requireAdminKey, (req, res) => {
++  const eventId = req.header('x-event-id') || req.query.eventId || '';
++  const event = eventId && getEvent(eventId);
++  if (!event) return res.status(400).json({ error: 'Unknown or missing event' });
++  const rec = db.prepare('SELECT * FROM students WHERE token = ? AND event_id = ?').get(req.params.token, event.id);
++  if (!rec) return res.status(404).json({ error: 'Roster entry not found in this event' });
++  db.prepare('DELETE FROM students WHERE token = ? AND event_id = ?').run(req.params.token, event.id);
++  res.json({ ok: true });
++});
++
+ app.get('/api/students', requireEventRole('employee'), (req, res) => {
+   res.json(db.prepare('SELECT * FROM students WHERE event_id = ? ORDER BY created_at DESC').all(req.eventId));
+ });
+-- 
+2.43.0
+

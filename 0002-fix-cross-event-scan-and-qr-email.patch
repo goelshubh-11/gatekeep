@@ -1,0 +1,245 @@
+From 5b32d8427476f50f62c8cfd72d9f25e76ea0aadf Mon Sep 17 00:00:00 2001
+From: Claude <claude@anthropic.com>
+Date: Sun, 16 Aug 2026 16:37:48 +0000
+Subject: [PATCH] Fix cross-event QR scan security hole; fix inline QR image in
+ emails
+
+- db.js/server.js: /api/verify was looking up scan tokens globally across
+  ALL events with no check that the token belonged to the event currently
+  being scanned for. A QR issued for Event A would verify as valid at Event
+  B's gate for any scanning staff member who also had access to Event A -
+  which every admin always does by default. Now /api/verify is event-scoped
+  like every other route (requireEventRole('scanner') + x-event-id), and
+  verifyTxn() rejects a token whose event_id doesn't match with a new
+  'wrong-event' result instead of silently verifying it.
+- index.html: send x-event-id on the verify call (previously omitted), and
+  show a distinct 'Wrong event' message for the new result instead of
+  lumping it in with plain 'Invalid pass'.
+- mailer.js/server.js: the inline QR in confirmation emails was a base64
+  data: URI, which many mail clients (Gmail, Outlook, corporate filters)
+  silently strip - so it rendered as nothing even though the HTML was
+  valid. Replaced with a real hosted image URL: added a public GET
+  /api/qr/:token route (safe to expose unauthenticated - the QR only ever
+  encodes the random pass token itself, never personal data, same as the
+  existing security model) and pointed the email's <img> at it. The PNG
+  attachment stays as an offline fallback. Also added app.set('trust
+  proxy', true) so the generated URL correctly resolves to https:// behind
+  Railway's reverse proxy.
+---
+ db.js             |  7 ++++++-
+ mailer.js         | 34 +++++++++++++++++++++++---------
+ public/index.html |  6 +++++-
+ server.js         | 50 +++++++++++++++++++++++++++++++++++------------
+ 4 files changed, 74 insertions(+), 23 deletions(-)
+
+diff --git a/db.js b/db.js
+index 0be9ccb..8c666eb 100644
+--- a/db.js
++++ b/db.js
+@@ -313,9 +313,14 @@ function checkAdminKey(plain) {
+ }
+ 
+ // ================= scan dedupe =================
+-const verifyTxn = db.transaction((token) => {
++// eventId is the event currently selected in the Gate Scanner — a token
++// that exists but belongs to a DIFFERENT event must never verify here, even
++// if the scanning staff member happens to also have access to that other
++// event (e.g. an admin, who has access to every event by default).
++const verifyTxn = db.transaction((token, eventId) => {
+   const rec = db.prepare('SELECT * FROM students WHERE token = ?').get(token);
+   if (!rec) return { result: 'invalid' };
++  if (rec.event_id !== eventId) return { result: 'wrong-event' };
+   if (rec.status === 'used') return { result: 'already', record: rec };
+   const usedAt = Date.now();
+   db.prepare('UPDATE students SET status = ?, used_at = ? WHERE token = ?').run('used', usedAt, token);
+diff --git a/mailer.js b/mailer.js
+index 9fc59b0..98c8142 100644
+--- a/mailer.js
++++ b/mailer.js
+@@ -1,6 +1,18 @@
+ const QRCode = require('qrcode');
+ 
+-async function sendPassEmail({ to, name, studentId, token, eventName }) {
++// Shared by the email (attachment) and the public /api/qr/:token route (the
++// inline <img> in the email points at that route instead of embedding the
++// image data directly - see sendPassEmail below for why).
++async function generateQrPngBuffer(token) {
++  return QRCode.toBuffer(token, {
++    width: 480,
++    margin: 2,
++    errorCorrectionLevel: 'M',
++    color: { dark: '#000000', light: '#FFFFFF' }
++  });
++}
++
++async function sendPassEmail({ to, name, studentId, token, eventName, baseUrl }) {
+   if (!to) {
+     throw new Error('No recipient email address provided');
+   }
+@@ -12,14 +24,18 @@ async function sendPassEmail({ to, name, studentId, token, eventName }) {
+   }
+ 
+   // Real PNG, not an HTML table - this is what makes it reliably scannable.
+-  const qrBuffer = await QRCode.toBuffer(token, {
+-    width: 480,
+-    margin: 2,
+-    errorCorrectionLevel: 'M',
+-    color: { dark: '#000000', light: '#FFFFFF' }
+-  });
++  const qrBuffer = await generateQrPngBuffer(token);
+   const qrBase64 = qrBuffer.toString('base64');
+   const attachmentName = 'entry-pass.png';
++  // Inline image: a real hosted URL, not a cid: reference (Brevo's API
++  // doesn't support those) and not a base64 data: URI either - most mail
++  // clients (Gmail, Outlook, corporate filters) strip or refuse to render
++  // embedded base64 images, so it silently showed nothing even though the
++  // HTML was technically valid. A normal https:// image URL is the one
++  // format every mail client actually knows how to load, same as any
++  // ordinary "load images" prompt they already show every day. The PNG
++  // attachment stays too, as an offline fallback if images are blocked.
++  const qrImageUrl = baseUrl ? `${baseUrl}/api/qr/${encodeURIComponent(token)}` : null;
+ 
+   const html = `
+     <!DOCTYPE html>
+@@ -42,7 +58,7 @@ async function sendPassEmail({ to, name, studentId, token, eventName }) {
+                 </tr>
+                 <tr>
+                   <td align="center" style="padding:20px 10px;">
+-                    <img src="data:image/png;base64,${qrBase64}" width="260" height="260" alt="Entry QR code" style="display:block;border:10px solid #FFFFFF;background:#FFFFFF;" />
++                    <img src="${qrImageUrl || `data:image/png;base64,${qrBase64}`}" width="260" height="260" alt="Entry QR code" style="display:block;border:10px solid #FFFFFF;background:#FFFFFF;" />
+                   </td>
+                 </tr>
+                 <tr>
+@@ -162,4 +178,4 @@ function escapeHtml(value) {
+   }[c]));
+ }
+ 
+-module.exports = { sendPassEmail, sendOtpEmail };
++module.exports = { sendPassEmail, sendOtpEmail, generateQrPngBuffer };
+diff --git a/public/index.html b/public/index.html
+index 9175171..186f1eb 100644
+--- a/public/index.html
++++ b/public/index.html
+@@ -1134,11 +1134,15 @@ async function verifyToken(token, fromCamera){
+   const meta = document.getElementById('resultMeta');
+   panel.className='result-panel state-idle'; title.textContent='Checking…'; sub.textContent=''; meta.textContent='';
+   try{
+-    const r = await api('/api/verify', {method:'POST', body: JSON.stringify({token})});
++    const r = await api('/api/verify', {method:'POST', body: JSON.stringify({token})}, true);
+     if(r.result === 'invalid'){
+       panel.className='result-panel state-invalid'; title.textContent='Invalid pass';
+       sub.textContent='This code was not found in the registered roster.'; meta.textContent=token;
+       vibrate(160); beep(140, 0.25);
++    }else if(r.result === 'wrong-event'){
++      panel.className='result-panel state-invalid'; title.textContent='Wrong event';
++      sub.textContent='This pass was issued for a different event and is not valid here.'; meta.textContent=token;
++      vibrate(160); beep(140, 0.25);
+     }else if(r.result === 'already'){
+       panel.className='result-panel state-used'; title.textContent='Already scanned';
+       sub.textContent=`${r.record.name} was already checked in.`;
+diff --git a/server.js b/server.js
+index 9545eff..c9aa60f 100644
+--- a/server.js
++++ b/server.js
+@@ -13,7 +13,7 @@ const {
+   getAdminKeyHash, setAdminKeyHash, checkAdminKey,
+   verifyTxn
+ } = require('./db');
+-const { sendPassEmail, sendOtpEmail } = require('./mailer');
++const { sendPassEmail, sendOtpEmail, generateQrPngBuffer } = require('./mailer');
+ const { signToken, signSignupToken, verifyToken, hashPassword, checkPassword } = require('./auth');
+ 
+ if (!process.env.JWT_SECRET) {
+@@ -22,11 +22,37 @@ if (!process.env.JWT_SECRET) {
+ }
+ 
+ const app = express();
++// Railway (and most PaaS hosts) terminate HTTPS at a reverse proxy and
++// forward plain HTTP internally, so without this Express thinks every
++// request is insecure http://. That matters for building the QR image URL
++// embedded in confirmation emails (see /api/qr/:token below) - it needs to
++// be a real https:// link.
++app.set('trust proxy', true);
+ app.use(cors());
+ app.use(express.json({ limit: '2mb' }));
+ app.use(express.static(path.join(__dirname, 'public')));
+ 
+ function genToken() { return crypto.randomBytes(9).toString('hex').toUpperCase(); }
++function baseUrlFor(req) { return `${req.protocol}://${req.get('host')}`; }
++
++// Public - deliberately no auth. Only ever encodes the random pass token
++// itself (see README: "QR codes only encode a random pass code, never
++// personal data"), so serving the raw QR image to anyone who has the token
++// leaks nothing new. This is what the confirmation email's inline <img>
++// points at, since neither cid: attachments nor base64 data: URIs render
++// reliably across mail clients.
++app.get('/api/qr/:token', async (req, res) => {
++  try {
++    const token = String(req.params.token || '').trim().toUpperCase();
++    if (!token) return res.status(400).end();
++    const buf = await generateQrPngBuffer(token);
++    res.setHeader('Content-Type', 'image/png');
++    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
++    res.send(buf);
++  } catch (e) {
++    res.status(500).end();
++  }
++});
+ 
+ // ================= auth middleware =================
+ function requireAuth(req, res, next) {
+@@ -186,7 +212,7 @@ app.post('/api/students', requireEventRole('employee'), async (req, res) => {
+   let mailStatus = 'skipped', mailError = null;
+   if (email) {
+     try {
+-      await sendPassEmail({ to: email, name, studentId, token, eventName: req.event.name });
++      await sendPassEmail({ to: email, name, studentId, token, eventName: req.event.name, baseUrl: baseUrlFor(req) });
+       db.prepare('UPDATE students SET mail_sent = 1 WHERE token = ?').run(token);
+       mailStatus = 'sent';
+     } catch (e) {
+@@ -213,7 +239,7 @@ app.post('/api/students/bulk', requireEventRole('employee'), async (req, res) =>
+     let mailStatus = 'skipped';
+     if (row.email) {
+       try {
+-        await sendPassEmail({ to: row.email, name, studentId: row.id, token, eventName: req.event.name });
++        await sendPassEmail({ to: row.email, name, studentId: row.id, token, eventName: req.event.name, baseUrl: baseUrlFor(req) });
+         db.prepare('UPDATE students SET mail_sent = 1 WHERE token = ?').run(token);
+         mailStatus = 'sent';
+       } catch (e) {
+@@ -235,7 +261,7 @@ app.post('/api/students/:token/resend', requireAuth, async (req, res) => {
+   if (!rec.email) return res.status(400).json({ error: 'no email on file' });
+   const event = getEvent(rec.event_id) || { name: 'Event' };
+   try {
+-    await sendPassEmail({ to: rec.email, name: rec.name, studentId: rec.student_id, token: rec.token, eventName: event.name });
++    await sendPassEmail({ to: rec.email, name: rec.name, studentId: rec.student_id, token: rec.token, eventName: event.name, baseUrl: baseUrlFor(req) });
+     db.prepare('UPDATE students SET mail_sent = 1, mail_error = NULL WHERE token = ?').run(rec.token);
+     res.json({ ok: true });
+   } catch (e) {
+@@ -278,16 +304,16 @@ app.get('/api/export.csv', requireEventRole('employee'), (req, res) => {
+   res.send(csv);
+ });
+ 
+-// ================= scan / verify (scanner+, event-scoped after lookup) =================
+-app.post('/api/verify', requireAuth, (req, res) => {
++// ================= scan / verify (scanner+, event-scoped) =================
++// Event-scoped exactly like /api/students etc: requires x-event-id and
++// checks the scanner has access to THAT event. Previously this looked the
++// token up globally with no event check at all, so a QR issued for Event A
++// would verify as valid at Event B's gate for any staff member who also had
++// access to Event A (which every admin always does) — a real security hole.
++app.post('/api/verify', requireEventRole('scanner'), (req, res) => {
+   const token = (req.body?.token || '').trim().toUpperCase();
+   if (!token) return res.status(400).json({ error: 'token required' });
+-  const rec = db.prepare('SELECT * FROM students WHERE token = ?').get(token);
+-  if (!rec) return res.json({ result: 'invalid' });
+-  if (!userHasEventAccess(req.user, rec.event_id, 'scanner')) {
+-    return res.status(403).json({ error: 'You do not have scanner access to this event' });
+-  }
+-  res.json(verifyTxn(token));
++  res.json(verifyTxn(token, req.eventId));
+ });
+ 
+ // ================= Team Details (central directory) =================
+-- 
+2.43.0
+

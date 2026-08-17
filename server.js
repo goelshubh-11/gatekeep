@@ -4,7 +4,7 @@ const cors = require('cors');
 const crypto = require('crypto');
 const path = require('path');
 const {
-  ddb, listEvents, getEvent, createEvent, renameEvent, deleteEventCascade,
+  db, listEvents, getEvent, createEvent, renameEvent, deleteEventCascade,
   listAllUsers, getUserById, getUserByEmailFull, getUserByUsernameFull, countAdmins,
   adminAddUser, startSignup, verifyOtp, setPassword, updateUserPassword,
   setUserAdmin, deleteUser,
